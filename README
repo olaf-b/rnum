@@ -1,0 +1,76 @@
+
+= Ruby/RNum - Ruby Numerical Library
+
+A Blas and Lapack based algebra package.
+----
+=== Features
+
+Major features:
+* Blas and Lapack functions interface
+* Utility matrix/vector functions
+* Matrix/vector class RNum for fast and easy matrix operations.
+
+RNum is similiar to Python/NumPy, but also includes easy rubyish access to
+underlaying Blas and Lapack functions.
+
+RNum is very fast.  Here is a brief comparison:
+
+Solve
+        AX = B, A (nxn), B(nxn)
+
+Ranking after least cpu-time (sec).
+Linux 2.6.16.19, Intel(R) Pentium(R) 4 - CPU 2.80GHz
+                                  n = 500   n = 1000
+1) Ruby RNum:                       0.15      0.97
+2) Matlab R2006a:                   0.16      0.97
+3) Octave 2.1.69:                   0.17      1.07
+4) Python NumPy/SciPy:              0.19      1.12
+5) Python Numeric:                  1.86     14.09
+6) Ruby Narray:                     1.98     15.27
+
+----
+=== Getting the software
+
+The software is available at Rubyforge http://rubyforge.org/projects/rnum/
+
+----
+=== Installation
+
+You need a working cblas and lapack library.  Suggested implementation is
+Atlas (http://www.netlib.org/atlas).
+
+Compile and install by
+
+    ruby extconf.rb
+    make
+    make site-install
+    (or, make install)
+
+----
+=== Tested platform
+
+  ruby 1.8.4 (2005-12-24) [i686-linux]
+  ruby 1.8.4 (2005-12-24) [i386-freebsd6]
+  ruby 1.8.6 (2007-09-24 patchlevel 111) [universal-darwin9.0]
+  ruby 1.8.6 (2007-09-24 patchlevel 111) [i386-freebsd7]
+  gcc version 3.4.4 [FreeBSD]
+  gcc (GCC) 4.2.1 20070719  [FreeBSD]
+  gcc version 3.4.6 (Gentoo 3.4.6-r1, ssp-3.4.5-1.0, pie-8.7.9)
+  atlas version 3.6.0
+  lapack version 3.0
+  Mac-OS-X Accelerate/vecLib frameworks.
+
+----
+=== Credits
+  Tore Haug-Warberg for input on ruby RNum matrix/vector classes.
+  Martin Sarajervi for help in debugging Accelerate/vecLib support.
+  Walter Moreira for supplying rank and singular_values methods.
+
+----
+=== Details
+
+Author:: Olaf Trygve Berglihn <olafb@pvv.org>
+Requires:: Ruby 1.8.1 or later
+License:: Copyright (c) 2006- Olaf Trygve Berglihn
+          Released under the same terms as Ruby itself.
+

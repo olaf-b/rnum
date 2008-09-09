@@ -1,0 +1,6 @@
+- Add support for complex in rnum.rb
+- Add more (all) lapack functions.
+- Testing, testing and testing.
+- Mask-function.
+- .each iterator
+- Range in .cols and .rows
