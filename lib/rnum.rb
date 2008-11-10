@@ -29,7 +29,7 @@ module RNum
     #   RNum::vector([1, 2, 3, 4])
     #   => RNum::Vector[1.0, 2.0, 3.0, 4.0]
     # 
-        def vector(arg); return Vector::new(arg); end
+    def vector(arg); return Vector::new(arg); end
     
     #
     # Creates a matrix with all elements set to 1.0.  Argument is either a
@@ -107,7 +107,14 @@ module RNum
     #
     def veccat(*args)
         if args.size < 2
-            raise ArgumentError, "Expected atleast two arguments."
+          case args.first
+          when Numeric
+            return vector(args)
+          when Vector
+            return vector(args[0])
+          else
+            raise ArgumentError, "Was given only one argument and expected Numeric or Vector"
+          end
         end
         dim = args.inject(0){|d, a|
             case a
@@ -930,7 +937,7 @@ module RNum
             RAtlas::reshape!(@storage, arg)
             return self
         end
-        def reshape(arg); clone.reshape(arg); end
+        def reshape(arg); clone.reshape!(arg); end
         def flatten!
             nelem = size[0]*size[1]
             RAtlas::reshape!(@storage, [1, nelem])
