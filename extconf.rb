@@ -16,13 +16,7 @@ begin
     if cc_version.scan(/\(GCC\)/).empty?
         puts("#{CONFIG['CC']} is not GCC")
     else
-        m = cc_version.split("\n").first.scan(/ [\d.]{1,}\d /)
-        if not m.empty?
-            gcc_version = m.first.strip
-            puts("Using GCC version #{gcc_version}")
-        else
-            puts("Using GCC, but could not find out which version.")
-        end
+        gcc_version = `#{CONFIG['CC']} -dumpversion`.strip
         $CPPFLAGS += " -Wall"
     end
 rescue
@@ -69,7 +63,7 @@ else
             end
         else
             if not have_library('gfortran') and not find_library('gfortran',
-                'main', "/usr/lib/gcc-#{gcc_version}", 
+                '', "/usr/lib/gcc-#{gcc_version}", 
                 "/usr/local/lib/gcc-#{gcc_version}")
                 puts("No libgfortran found.  It might be required for lapack.")
                 puts("You might need to create a symlink libgfortran.so to")
