@@ -40,7 +40,7 @@ module RNum
     #   => RNum::Matrix[[1.0, 1.0], [1.0, 1.0], [1.0, 1.0]]
     #   
     def ones(m, n=nil)
-        !n ? arg = m : arg = [m,n]
+        arg = n.nil? ? m : [m,n]
         case arg
         when Array
             Matrix::ones(arg)
@@ -56,7 +56,7 @@ module RNum
     # ones.
     # 
     def zeros(m, n=nil)
-        !n ? arg = m : arg = [m,n]
+        arg = n.nil? ? m : [m,n]
         case arg
         when Array
             Matrix::zeros(arg)
@@ -70,7 +70,7 @@ module RNum
     # Creates a matrix with 1.0 on the diagonal.  Argumens as in ones.
     # 
     def eye(m, n=nil)
-        !n ? arg = m : arg = [m,n]
+        arg = n.nil? ? m : [m,n]
         case arg
         when Array
                    Matrix::eye(arg)
@@ -89,7 +89,7 @@ module RNum
     # is a Fixnum.  Does not set memory to zero.
     #
     def alloc(m, n=nil)
-        !n ? arg = m : arg = [m,n]
+        arg = n.nil? ? m : [m,n]
         case arg
             when Fixnum
                 stor = RAtlas::alloc([arg,1])
