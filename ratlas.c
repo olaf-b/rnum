@@ -119,6 +119,7 @@ void Init_ratlas() {
     rb_define_singleton_method(ratlas_module, "hcat", ratlas_hcat, 2);
     rb_define_singleton_method(ratlas_module, "vcat", ratlas_vcat, 2);
     rb_define_singleton_method(ratlas_module, "map!", ratlas_map_bang, 2);
+    rb_define_singleton_method(ratlas_module, "each", ratlas_each, 2);
     rb_define_singleton_method(ratlas_module, "zip!", ratlas_zip_bang, 3);
     rb_define_singleton_method(ratlas_module, "column", 
             ratlas_get_column, 2);

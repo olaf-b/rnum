@@ -2208,6 +2208,45 @@ VALUE ratlas_map_bang(VALUE self, VALUE stor, VALUE block)
 
 
 
+VALUE ratlas_each(VALUE self, VALUE stor, VALUE block)
+{
+    VALUE val;
+    Ratlas_Matrix *mat;
+    unsigned long int i, nelem;
+    int m, n;
+    double *r;
+    Ratlas_Complex *c, ci;
+    
+    Data_Get_Struct(stor, Ratlas_Matrix, mat);
+
+    m = mat->nrow;
+    n = mat->ncol;
+    nelem = m*n;
+    switch (mat->type) {
+        case RATLAS_DFLOAT:
+            r = (double *) mat->data;
+            for (i = 0; i < nelem; i++)
+            {
+                val = rb_float_new(r[ratlas_swap_major(m,n,i)]);
+                rb_funcall2(block, id_call, 1, &val);
+            }
+            break;
+        case RATLAS_DCOMPLEX:
+            c = (Ratlas_Complex *) mat->data;
+            for (i = 0; i < nelem; i++)
+            {
+                ci = c[ratlas_swap_major(m,n,i)];
+                val = ratlas_rb_complex_new(ci.r, ci.i);
+                rb_funcall2(block, id_call, 1, &val);
+            }
+            break;
+    }
+    return stor;
+}
+
+
+
+
 VALUE ratlas_zip_bang(VALUE self, VALUE stor, VALUE stors, VALUE block)
 {
     VALUE *tmparr, val;
