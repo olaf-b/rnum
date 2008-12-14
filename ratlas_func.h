@@ -59,6 +59,7 @@ VALUE ratlas_get_rows(VALUE self, VALUE storage, VALUE rowidx);
 VALUE ratlas_set_column_bang(VALUE self, VALUE storage, VALUE colidx, VALUE newval);
 VALUE ratlas_map_bang(VALUE self, VALUE stor, VALUE block);
 VALUE ratlas_each(VALUE self, VALUE stor, VALUE block);
+VALUE ratlas_each_with_index(VALUE self, VALUE stor, VALUE block);
 VALUE ratlas_zip_bang(VALUE self, VALUE stor, VALUE argv, VALUE block);
 VALUE ratlas_set_columns_bang(VALUE self, VALUE storage, VALUE colidx, VALUE newval);
 VALUE ratlas_set_row_bang(VALUE self, VALUE storage, VALUE rowidx, VALUE newval);

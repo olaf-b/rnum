@@ -580,6 +580,10 @@ module RNum
         end
         def map(&block); return clone.map!(&block); end
         def each(&block); RAtlas::each(@storage, block); return self; end
+        def each_with_index(&block)
+          RAtlas::each_with_index(@storage, block)
+          return self
+        end
         def zip!(*args, &block)
             arg = args.map{|i| i.storage}
             RAtlas::zip!(@storage, arg, block)

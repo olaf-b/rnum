@@ -2246,6 +2246,48 @@ VALUE ratlas_each(VALUE self, VALUE stor, VALUE block)
 
 
 
+VALUE ratlas_each_with_index(VALUE self, VALUE stor, VALUE block)
+{
+    VALUE val, idx, ary;
+    Ratlas_Matrix *mat;
+    unsigned long int i, nelem;
+    int m, n;
+    double *r;
+    Ratlas_Complex *c, ci;
+    
+    Data_Get_Struct(stor, Ratlas_Matrix, mat);
+
+    m = mat->nrow;
+    n = mat->ncol;
+    nelem = m*n;
+    switch (mat->type) {
+        case RATLAS_DFLOAT:
+            r = (double *) mat->data;
+            for (i = 0; i < nelem; i++)
+            {
+                val = rb_float_new(r[ratlas_swap_major(m,n,i)]);
+                idx = INT2FIX(i);
+                ary = rb_ary_new3(2, val, idx);
+                rb_funcall2(block, id_call, 1, &ary);
+            }
+            break;
+        case RATLAS_DCOMPLEX:
+            c = (Ratlas_Complex *) mat->data;
+            for (i = 0; i < nelem; i++)
+            {
+                ci = c[ratlas_swap_major(m,n,i)];
+                val = ratlas_rb_complex_new(ci.r, ci.i);
+                idx = INT2FIX(i);
+                ary = rb_ary_new3(2, val, idx);
+                rb_funcall2(block, id_call, 1, &ary);
+            }
+            break;
+    }
+    return stor;
+}
+
+
+
 
 VALUE ratlas_zip_bang(VALUE self, VALUE stor, VALUE stors, VALUE block)
 {
