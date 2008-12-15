@@ -584,6 +584,10 @@ module RNum
           RAtlas::each_with_index(@storage, block)
           return self
         end
+        def each_with_ijindex(&block)
+          RAtlas::each_with_ijindex(@storage, block)
+          return self
+        end
         def zip!(*args, &block)
             arg = args.map{|i| i.storage}
             RAtlas::zip!(@storage, arg, block)

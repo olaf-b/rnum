@@ -122,6 +122,8 @@ void Init_ratlas() {
     rb_define_singleton_method(ratlas_module, "each", ratlas_each, 2);
     rb_define_singleton_method(ratlas_module, "each_with_index",
         ratlas_each_with_index, 2);
+    rb_define_singleton_method(ratlas_module, "each_with_ijindex",
+        ratlas_each_with_ijindex, 2);
     rb_define_singleton_method(ratlas_module, "zip!", ratlas_zip_bang, 3);
     rb_define_singleton_method(ratlas_module, "column", 
             ratlas_get_column, 2);

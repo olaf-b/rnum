@@ -1702,8 +1702,8 @@ VALUE ratlas_get2d_by_range(VALUE self, VALUE storage, VALUE rowrange,
                 ic = 0;
                 for (j = colfirst; j <= collast; j++)
                 {
-                    idest = 2*(ir + ic * retmat->nrow);
-                    isrc = 2*(i + j * rmat->nrow);
+                    idest = ir + ic * retmat->nrow;
+                    isrc = i + j * rmat->nrow;
                     cdest[idest].r = csrc[isrc].r;
                     cdest[idest].i = csrc[isrc].i;
                     ic++;
@@ -2054,8 +2054,8 @@ VALUE ratlas_set2d_by_range_bang(VALUE self, VALUE storage, VALUE rowrange,
                 ic = 0;
                 for (j = colfirst; j <= collast; j++)
                 {
-                    isrc = 2*(ir + ic * newmat->nrow);
-                    idest = 2*(i + j * mat->nrow);
+                    isrc = ir + ic * newmat->nrow;
+                    idest = i + j * mat->nrow;
                     cdest[idest].r = csrc[isrc].r;
                     cdest[idest].i = csrc[isrc].i;
                     ic++;
@@ -2281,6 +2281,50 @@ VALUE ratlas_each_with_index(VALUE self, VALUE stor, VALUE block)
                 ary = rb_ary_new3(2, val, idx);
                 rb_funcall2(block, id_call, 1, &ary);
             }
+            break;
+    }
+    return stor;
+}
+
+
+
+
+VALUE ratlas_each_with_ijindex(VALUE self, VALUE stor, VALUE block)
+{
+    VALUE ary;
+    Ratlas_Matrix *mat;
+    unsigned long int nelem;
+    int i, j, m, n;
+    double *r;
+    Ratlas_Complex *c, ci;
+    
+    Data_Get_Struct(stor, Ratlas_Matrix, mat);
+
+    m = mat->nrow;
+    n = mat->ncol;
+    nelem = m*n;
+    switch (mat->type) {
+        case RATLAS_DFLOAT:
+            r = (double *) mat->data;
+            for (i = 0; i < m; i++)
+              for (j = 0; j < n; j++)
+              {
+                ary = rb_ary_new3(3, rb_float_new(r[j*m+i]), 
+                    INT2FIX(i), INT2FIX(j));
+                rb_funcall2(block, id_call, 1, &ary);
+              }
+            break;
+        case RATLAS_DCOMPLEX:
+            c = (Ratlas_Complex *) mat->data;
+            for (i = 0; i < m; i++)
+              for (j = 0; j < n; j++)
+              {
+                ci = c[j*m+i];
+                
+                ary = rb_ary_new3(3, ratlas_rb_complex_new(ci.r, ci.i),
+                   INT2FIX(i), INT2FIX(j));
+                rb_funcall2(block, id_call, 1, &ary);
+              }
             break;
     }
     return stor;
@@ -2972,7 +3016,7 @@ static void apact(Ratlas_Matrix *amat, void *alpha, Ratlas_Matrix *cmat)
             cc = (Ratlas_Complex *) cmat->data;
             for (i = 0; i < nelem; i++)
             {
-                idx = 2*(i%n * m + i/n);
+                idx = i%n * m + i/n;
                 c = cc[idx].r;
                 d = cc[idx].i;
                 ca[i].r += (a*c - b*d);
