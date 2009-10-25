@@ -1488,22 +1488,24 @@ module RNum
         #
         # Inner product <self, arg>
         #
-        def inner(arg, t = RAtlas::NOTRANS) # a'*B
+        def inner(arg) #, t = RAtlas::NOTRANS) # a'*B
             case arg
             when RNum::Vector
                 Blas::dot(@storage, arg.storage)
             when RNum::Matrix
+              raise ArgumentError, "Product of vector times matrix is not defined. Convert vector to row matrix with .row."
+            # <v,M> should not be allowed as it is not properly defined.
             #    Blas has <M,v>. Get <v, M> from <a, B>=<B',a>'
-                if t == RAtlas::TRANS
-                    t = RAtlas::NOTRANS
-                else
-                    t = RAtlas::TRANS
-                end
-                n = self.length
-                retval = RNum::alloc(n)
-                Blas::gemv!(t, 1.0, arg.storage, @storage, 0.0, 
-                                              retval.storage)
-                n == 1 ? retval.get(0) : retval
+#                  if t == RAtlas::TRANS
+#                      t = RAtlas::NOTRANS
+#                  else
+#                      t = RAtlas::TRANS
+#                  end
+#                  n = self.length
+#                  retval = RNum::alloc(n)
+#                  Blas::gemv!(t, 1.0, arg.storage, @storage, 0.0, 
+#                                                retval.storage)
+#                  n == 1 ? retval.get(0) : retval
             else
                 raise ArgumentError, "Unable to calculate inner product of #{self.class} with #{arg.class}"
             end

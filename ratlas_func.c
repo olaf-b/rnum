@@ -385,30 +385,35 @@ int ratlas_check_type(VALUE obj, int ratlastype)
  */
 VALUE ratlas_matrix_new(VALUE self, VALUE arg)
 {
-    struct RArray *array1, *array2;
-    VALUE storage;
+/*     struct RArray *array1, *array2; */
+    VALUE storage, array2;
     Ratlas_Matrix *rmat;
     int size1, size2, i;
 
     Check_Type(arg, T_ARRAY);
-    array1 = RARRAY(arg);
-    size1 = array1->len;
+/*     array1 = RARRAY(arg); */
+/*     size1 = array1->len; */
+    size1 = RARRAY_LEN(arg);
     if (size1<1) 
         rb_raise(rb_eArgError, "Non-empty array expected.");
     
-    Check_Type(*array1->ptr, T_ARRAY);
-    array2 = RARRAY(*array1->ptr);
-    size2 = array2->len;
+/*     Check_Type(*array1->ptr, T_ARRAY); */
+    array2 = *RARRAY_PTR(arg);
+    Check_Type(array2, T_ARRAY);
+/*     array2 = RARRAY(*array1->ptr); */
+/*     size2 = array2->len; */
+    size2 = RARRAY_LEN(array2);
     if (size2<1) 
         rb_raise(rb_eArgError, "Matrix must have at least 1 column.");
 
     rmat = ratlas_matrix_alloc(RATLAS_DFLOAT, RATLAS_DENSE, size1, size2,
             NULL);
-    ratlas_store_float_row(size2, array2->ptr, rmat, 0);
+/*     ratlas_store_float_row(size2, array2->ptr, rmat, 0); */
+    ratlas_store_float_row(size2, RARRAY_PTR(array2), rmat, 0);
     for (i = 1; i < size1; i++)
     {
-        array2 = RARRAY(array1->ptr[i]);
-        ratlas_store_float_row(size2, array2->ptr, rmat, i);
+        array2 = RARRAY_PTR(arg)[i];
+        ratlas_store_float_row(size2, RARRAY_PTR(array2), rmat, i);
     }
     
     storage = Data_Wrap_Struct(ratlas_storage_class, 0,
@@ -463,31 +468,29 @@ VALUE ratlas_matrix_from_memadr(VALUE self, VALUE nrow, VALUE ncol,
 
 VALUE ratlas_cmatrix_new(VALUE self, VALUE arg)
 {
-    struct RArray *array1, *array2;
-    VALUE storage;
+/*     struct RArray *array1, *array2; */
+    VALUE storage, array2;
     Ratlas_Matrix *rmat;
     int size1=0, size2=0, i=0;
 
     Check_Type(arg, T_ARRAY);
-    array1 = RARRAY(arg);
-    size1 = array1->len;
+    size1 = RARRAY_LEN(arg);
     if (size1<1) 
         rb_raise(rb_eArgError, "Non-empty array expected.");
     
-    Check_Type(*array1->ptr, T_ARRAY);
-    array2 = RARRAY(*array1->ptr);
-    size2 = array2->len;
+    array2 = *RARRAY_PTR(arg);
+    Check_Type(array2, T_ARRAY);
+    size2 = RARRAY_LEN(array2);
     if (size2<1) 
         rb_raise(rb_eArgError, "Matrix must have at least 1 column.");
 
     rmat = ratlas_matrix_alloc(RATLAS_DCOMPLEX, 
             RATLAS_DENSE, size1, size2, NULL);
-    ratlas_store_complex_row(size2, array2->ptr, rmat, 0);
+    ratlas_store_complex_row(size2, RARRAY_PTR(array2), rmat, 0);
     for (i = 1; i < size1; i++)
     {
-        array2 = RARRAY(*(array1->ptr + i));
-        ratlas_store_complex_row(size2, array2->ptr,
-                rmat, i);
+        array2 = RARRAY_PTR(arg)[i];
+        ratlas_store_complex_row(size2, RARRAY_PTR(array2), rmat, i);
     }
     storage = Data_Wrap_Struct(ratlas_storage_class, 0,
             ratlas_matrix_free, rmat);
@@ -499,20 +502,20 @@ VALUE ratlas_cmatrix_new(VALUE self, VALUE arg)
 
 VALUE ratlas_vector_new(VALUE self, VALUE arg)
 {
-    struct RArray *array;
+/*     struct RArray *array; */
     VALUE storage;
     Ratlas_Matrix *rmat;
     int size;
 
     Check_Type(arg, T_ARRAY);
-    array = RARRAY(arg);
-    size = array->len;
+/*     array = RARRAY(arg); */
+    size = RARRAY_LEN(arg);
     if (size<1) 
         rb_raise(rb_eArgError, "Non-empty array expected.");
     
     rmat = ratlas_matrix_alloc(RATLAS_DFLOAT, RATLAS_DENSE, size, 1, NULL);
 
-    ratlas_store_float_column(size, array->ptr, rmat, 0);
+    ratlas_store_float_column(size, RARRAY_PTR(arg), rmat, 0);
      storage = Data_Wrap_Struct(ratlas_storage_class, 0,
             ratlas_matrix_free, rmat);
     return storage;
@@ -523,21 +526,17 @@ VALUE ratlas_vector_new(VALUE self, VALUE arg)
 
 VALUE ratlas_cvector_new(VALUE self, VALUE arg)
 {
-    struct RArray *array;
+/*     struct RArray *array; */
     VALUE storage;
     Ratlas_Matrix *rmat;
     int size;
 
     Check_Type(arg, T_ARRAY);
-    array = RARRAY(arg);
-    size = array->len;
-    if (size<1) 
-        rb_raise(rb_eArgError, "Non-empty array expected.");
-    
-    rmat = ratlas_matrix_alloc(RATLAS_DCOMPLEX, RATLAS_DENSE, size, 1, 
-            NULL);
-
-    ratlas_store_complex_column(size, array->ptr, rmat, 0);
+/*     array = RARRAY(arg); */
+    size = RARRAY_LEN(arg);
+    if (size<1) rb_raise(rb_eArgError, "Non-empty array expected.");
+    rmat = ratlas_matrix_alloc(RATLAS_DCOMPLEX, RATLAS_DENSE, size, 1, NULL);
+    ratlas_store_complex_column(size, RARRAY_PTR(arg), rmat, 0);
     storage = Data_Wrap_Struct(ratlas_storage_class, 0,
             ratlas_matrix_free, rmat);
     return storage;
@@ -548,25 +547,23 @@ VALUE ratlas_cvector_new(VALUE self, VALUE arg)
 
 VALUE ratlas_zeros_new(VALUE self, VALUE arg)
 {
-    struct RArray *carg;
+/*     struct RArray *carg; */
     VALUE storage;
     Ratlas_Matrix *rmat;
-    int size1, size2;
+    int size1, size2, arglen;
     unsigned long int nelem;
     double *zeros;
 
     Check_Type(arg, T_ARRAY);
-    carg = RARRAY(arg);
-    if (carg->len > 2) 
-        rb_raise(rb_eArgError, "Unexpected dimensions.");
-    Check_Type(carg->ptr[0], T_FIXNUM);
-    size1 = NUM2INT(carg->ptr[0]);
-    if (carg->len == 2)
-    {
-        Check_Type(carg->ptr[1], T_FIXNUM);
-        size2 = NUM2INT(carg->ptr[1]);
-    } else
-    {
+/*     carg = RARRAY(arg); */
+    arglen = RARRAY_LEN(arg);
+    if (arglen > 2) rb_raise(rb_eArgError, "Unexpected dimensions.");
+    Check_Type(*RARRAY_PTR(arg), T_FIXNUM);
+    size1 = NUM2INT(*RARRAY_PTR(arg));
+    if (arglen == 2) {
+        Check_Type(RARRAY_PTR(arg)[1], T_FIXNUM);
+        size2 = NUM2INT(RARRAY_PTR(arg)[1]);
+    } else {
         size2 = 1;
     }
 
@@ -588,25 +585,23 @@ VALUE ratlas_zeros_new(VALUE self, VALUE arg)
 
 VALUE ratlas_czeros_new(VALUE self, VALUE arg)
 {
-    struct RArray *carg;
+/*     struct RArray *carg; */
     VALUE storage;
     Ratlas_Matrix *rmat;
-    int size1, size2;
+    int size1, size2, arglen;
     unsigned long int nelem;
     double *zeros;
 
     Check_Type(arg, T_ARRAY);
-    carg = RARRAY(arg);
-    if (carg->len > 2) 
-        rb_raise(rb_eArgError, "Unexpected dimensions.");
-    Check_Type(carg->ptr[0], T_FIXNUM);
-    size1 = NUM2INT(carg->ptr[0]);
-    if (carg->len == 2)
-    {
-        Check_Type(carg->ptr[1], T_FIXNUM);
-        size2 = NUM2INT(carg->ptr[1]);
-    } else
-    {
+/*     carg = RARRAY(arg); */
+    arglen = RARRAY_LEN(arg);
+    if (arglen > 2) rb_raise(rb_eArgError, "Unexpected dimensions.");
+    Check_Type(*RARRAY_PTR(arg), T_FIXNUM);
+    size1 = NUM2INT(*RARRAY_PTR(arg));
+    if (arglen == 2) {
+        Check_Type(RARRAY_PTR(arg)[1], T_FIXNUM);
+        size2 = NUM2INT(RARRAY_PTR(arg)[1]);
+    } else {
         size2 = 1;
     }
 
@@ -629,25 +624,22 @@ VALUE ratlas_czeros_new(VALUE self, VALUE arg)
 
 VALUE ratlas_ones_new(VALUE self, VALUE arg)
 {
-    struct RArray *carg;
+/*     struct RArray *carg; */
     VALUE storage;
     Ratlas_Matrix *rmat;
-    int size1, size2;
+    int size1, size2, arglen;
     unsigned long int nelem;
     double *zeros;
 
     Check_Type(arg, T_ARRAY);
-    carg = RARRAY(arg);
-    if (carg->len > 2) 
-        rb_raise(rb_eArgError, "Unexpected dimensions.");
-    Check_Type(carg->ptr[0], T_FIXNUM);
-    size1 = NUM2INT(carg->ptr[0]);
-    if (carg->len == 2)
-    {
-        Check_Type(carg->ptr[1], T_FIXNUM);
-        size2 = NUM2INT(carg->ptr[1]);
-    } else
-    {
+    arglen = RARRAY_LEN(arg);
+    if (arglen > 2) rb_raise(rb_eArgError, "Unexpected dimensions.");
+    Check_Type(*RARRAY_PTR(arg), T_FIXNUM);
+    size1 = NUM2INT(*RARRAY_PTR(arg));
+    if (arglen == 2) {
+        Check_Type(RARRAY_PTR(arg)[1], T_FIXNUM);
+        size2 = NUM2INT(RARRAY_PTR(arg)[1]);
+    } else {
         size2 = 1;
     }
 
@@ -672,25 +664,23 @@ VALUE ratlas_ones_new(VALUE self, VALUE arg)
 
 VALUE ratlas_eye_new(VALUE self, VALUE arg)
 {
-    struct RArray *carg;
+/*     struct RArray *carg; */
     VALUE storage;
     Ratlas_Matrix *rmat;
-    int size1, size2, ndiag;
+    int size1, size2, ndiag, arglen;
     unsigned long int nelem, i;
     double *zeros, *r;
 
     Check_Type(arg, T_ARRAY);
-    carg = RARRAY(arg);
-    if (carg->len > 2) 
-        rb_raise(rb_eArgError, "Unexpected dimensions.");
-    Check_Type(carg->ptr[0], T_FIXNUM);
-    size1 = NUM2INT(carg->ptr[0]);
-    if (carg->len == 2)
-    {
-        Check_Type(carg->ptr[1], T_FIXNUM);
-        size2 = NUM2INT(carg->ptr[1]);
-    } else
-    {
+/*     carg = RARRAY(arg); */
+    arglen = RARRAY_LEN(arg);
+    if (arglen > 2) rb_raise(rb_eArgError, "Unexpected dimensions.");
+    Check_Type(*RARRAY_PTR(arg), T_FIXNUM);
+    size1 = NUM2INT(*RARRAY_PTR(arg));
+    if (arglen == 2) {
+        Check_Type(RARRAY_PTR(arg)[1], T_FIXNUM);
+        size2 = NUM2INT(RARRAY_PTR(arg)[1]);
+    } else {
         size2 = 1;
     }
 
@@ -705,8 +695,7 @@ VALUE ratlas_eye_new(VALUE self, VALUE arg)
     ndiag = ratlas_imin(size1, size2);
 
     r = (double *) rmat->data;
-    for (i = 0; i < ndiag; i++)
-    {
+    for (i = 0; i < ndiag; i++) {
         r[rmat->nrow*i + i] = 1.0;
     }
     
@@ -764,25 +753,22 @@ VALUE ratlas_indgen_bang(VALUE self, VALUE stor, VALUE start)
 
 VALUE ratlas_cones_new(VALUE self, VALUE arg)
 {
-    struct RArray *carg;
+/*     struct RArray *carg; */
     VALUE storage;
     Ratlas_Matrix *rmat;
-    int size1, size2;
+    int size1, size2, arglen;
     unsigned long int nelem;
     double *zeros;
 
     Check_Type(arg, T_ARRAY);
-    carg = RARRAY(arg);
-    if (carg->len > 2) 
-        rb_raise(rb_eArgError, "Unexpected dimensions.");
-    Check_Type(carg->ptr[0], T_FIXNUM);
-    size1 = NUM2INT(carg->ptr[0]);
-    if (carg->len == 2)
-    {
-        Check_Type(carg->ptr[1], T_FIXNUM);
-        size2 = NUM2INT(carg->ptr[1]);
-    } else
-    {
+    arglen = RARRAY_LEN(arg);
+    if (arglen > 2) rb_raise(rb_eArgError, "Unexpected dimensions.");
+    Check_Type(*RARRAY_PTR(arg), T_FIXNUM);
+    size1 = NUM2INT(*RARRAY_PTR(arg));
+    if (arglen == 2) {
+        Check_Type(RARRAY_PTR(arg)[1], T_FIXNUM);
+        size2 = NUM2INT(RARRAY_PTR(arg)[1]);
+    } else {
         size2 = 1;
     }
 
@@ -1076,28 +1062,28 @@ VALUE ratlas_get_column(VALUE self, VALUE storage, VALUE colidx)
 
 VALUE ratlas_get_columns(VALUE self, VALUE storage, VALUE colidx)
 {
-    struct RArray *arr;
+/*     struct RArray *arr; */
     Ratlas_Matrix *mat, *retmat;
-    int i, j;
+    int i, j, arrlen;
     VALUE col;
     double *rsrc, *rdest;
     Ratlas_Complex *csrc, *cdest;
     unsigned long int nbytes, colskip=0;
             
     Check_Type(colidx, T_ARRAY);
-    arr = RARRAY(colidx);
+    arrlen = RARRAY_LEN(colidx);
     Data_Get_Struct(storage, Ratlas_Matrix, mat);
     retmat = ratlas_matrix_alloc(mat->type, mat->matrixtype, mat->nrow,
-            arr->len, NULL);
+            arrlen, NULL);
     nbytes = mat->nrow * ratlas_sizeof[mat->type];
     colskip = mat->nrow;
 
     switch (mat->type) {
         case RATLAS_DFLOAT:
             rdest = (double *)retmat->data;
-            for (i = 0; i < arr->len; i++)
+            for (i = 0; i < arrlen; i++)
             {
-                col = arr->ptr[i];
+                col = RARRAY_PTR(colidx)[i];
                 if (TYPE(col) != T_FIXNUM) goto error;
                 j = FIX2INT(col);
                 if (j < 0) j += mat->ncol;
@@ -1109,9 +1095,9 @@ VALUE ratlas_get_columns(VALUE self, VALUE storage, VALUE colidx)
             break;
         case RATLAS_DCOMPLEX:
                cdest = (Ratlas_Complex *)retmat->data;
-            for (i = 0; i < arr->len; i++)
+            for (i = 0; i < arrlen; i++)
             {
-                col = arr->ptr[i];
+                col = RARRAY_PTR(colidx)[i];
                 if (TYPE(col) != T_FIXNUM) goto error;
                 j = FIX2INT(col);
                 if (j < 0) j += mat->ncol;
@@ -1181,8 +1167,8 @@ VALUE ratlas_get_row(VALUE self, VALUE storage, VALUE rowidx)
 
 VALUE ratlas_get_rows(VALUE self, VALUE storage, VALUE rowidx)
 {
-    struct RArray *arr;
-    int i, j, k;
+/*     struct RArray *arr; */
+    int i, j, k, arrlen;
     unsigned long int isrc, idest;
     VALUE row;
     Ratlas_Matrix *mat, *retmat;
@@ -1190,17 +1176,18 @@ VALUE ratlas_get_rows(VALUE self, VALUE storage, VALUE rowidx)
     Ratlas_Complex *csrc, *cdest;
     
     Check_Type(rowidx, T_ARRAY);
-    arr = RARRAY(rowidx);
+/*     arr = RARRAY(rowidx); */
+    arrlen = RARRAY_LEN(rowidx);
     Data_Get_Struct(storage, Ratlas_Matrix, mat);
-    retmat = ratlas_matrix_alloc(mat->type, mat->matrixtype, arr->len, 
+    retmat = ratlas_matrix_alloc(mat->type, mat->matrixtype, arrlen, 
             mat->ncol, NULL);
     switch (mat->type) {
         case RATLAS_DFLOAT:
             rsrc = (double *)mat->data;
             rdest = (double *)retmat->data;
-            for (k = 0; k < arr->len; k++)
+            for (k = 0; k < arrlen; k++)
             {
-                row = arr->ptr[k];
+                row = RARRAY_PTR(rowidx)[k];
                 if (TYPE(row) != T_FIXNUM) goto error;
                 i = FIX2INT(row);
                 if (i < 0) i += mat->nrow;
@@ -1216,9 +1203,9 @@ VALUE ratlas_get_rows(VALUE self, VALUE storage, VALUE rowidx)
         case RATLAS_DCOMPLEX:
             csrc = (Ratlas_Complex *)mat->data;
             cdest = (Ratlas_Complex *)retmat->data;
-            for (k = 0; k < arr->len; k++)
+            for (k = 0; k < arrlen; k++)
             {
-                row = arr->ptr[k];
+                row = RARRAY_PTR(rowidx)[k];
                 if (TYPE(row) != T_FIXNUM) goto error;
                 i = FIX2INT(row);
                 if (i < 0) i += mat->nrow;
@@ -1248,7 +1235,7 @@ VALUE ratlas_set_column_bang(VALUE self, VALUE storage, VALUE colidx,
         VALUE newval)
 {
     Ratlas_Matrix *rmat;
-    struct RArray *cnewval;
+/*     struct RArray *cnewval; */
     int i, j;
     unsigned long int offset;
 
@@ -1259,23 +1246,21 @@ VALUE ratlas_set_column_bang(VALUE self, VALUE storage, VALUE colidx,
     if (j < 0) j += rmat->ncol;
     if (j > rmat->ncol - 1)
         rb_raise(rb_eIndexError, "Invalid column index.");
-    cnewval = RARRAY(newval);
-    if (cnewval->len != rmat->nrow)
+/*     cnewval = RARRAY(newval); */
+    if (RARRAY_LEN(newval) != rmat->nrow)
         rb_raise(rb_eArgError, "Wrong column size.");
     switch (rmat->type) {
         case RATLAS_DFLOAT:
-            for (i = 0; i < rmat->nrow; i++)
-            {
-                ratlas_assertnum(cnewval->ptr[i]);
+            for (i = 0; i < rmat->nrow; i++) {
+                ratlas_assertnum(RARRAY_PTR(newval)[i]);
                 offset = i + j*rmat->nrow;
-                ratlas_set_float(rmat->data, offset, cnewval->ptr[i]);
+                ratlas_set_float(rmat->data, offset, RARRAY_PTR(newval)[i]);
             }
             break;
         case RATLAS_DCOMPLEX:
-            for (i = 0; i < rmat->nrow; i++)
-            {
+            for (i = 0; i < rmat->nrow; i++) {
                 offset = i + j*rmat->nrow;
-                ratlas_set_complex(rmat->data, offset, cnewval->ptr[i]);
+                ratlas_set_complex(rmat->data, offset, RARRAY_PTR(newval)[i]);
             }
             break;
     }
@@ -1288,19 +1273,19 @@ VALUE ratlas_set_column_bang(VALUE self, VALUE storage, VALUE colidx,
 VALUE ratlas_set_columns_bang(VALUE self, VALUE storage, VALUE colidx,
         VALUE newval)
 {
-    struct RArray *ccolidx, *cnewval;
+/*     struct RArray *ccolidx, *cnewval; */
     int j;
 
     Check_Type(colidx, T_ARRAY);
-    ccolidx = RARRAY(colidx);
-    cnewval = RARRAY(newval);
-    if (cnewval->len != ccolidx->len)
+/*     ccolidx = RARRAY(colidx); */
+/*     cnewval = RARRAY(newval); */
+    if (RARRAY_LEN(newval) != RARRAY_LEN(colidx))
         rb_raise(rb_eArgError, "Index and argument size must match.");
     
-    for (j = 0;  j < ccolidx->len; j++)
+    for (j = 0;  j < RARRAY_LEN(colidx); j++)
     {
-        ratlas_set_column_bang(self, storage, ccolidx->ptr[j],
-                cnewval->ptr[j]);
+        ratlas_set_column_bang(self, storage, RARRAY_PTR(colidx)[j],
+                RARRAY_PTR(newval)[j]);
     }    
     return storage;
         
@@ -1312,7 +1297,7 @@ VALUE ratlas_set_columns_bang(VALUE self, VALUE storage, VALUE colidx,
 VALUE ratlas_set_row_bang(VALUE self, VALUE storage, VALUE rowidx, VALUE newval)
 {
     Ratlas_Matrix *rmat;
-    struct RArray *cnewval;
+/*     struct RArray *cnewval; */
     int i, j;
     unsigned long int offset;
 
@@ -1323,25 +1308,21 @@ VALUE ratlas_set_row_bang(VALUE self, VALUE storage, VALUE rowidx, VALUE newval)
     if (i < 0) i += rmat->nrow;
     if (i > rmat->nrow - 1)
         rb_raise(rb_eIndexError, "Invalid row index.");
-    cnewval = RARRAY(newval);
-    if (cnewval->len != rmat->ncol)
+/*     cnewval = RARRAY(newval); */
+    if (RARRAY_LEN(newval) != rmat->ncol)
         rb_raise(rb_eArgError, "Wrong row size.");
     switch (rmat->type) {
         case RATLAS_DFLOAT:
-            for (j = 0; j < rmat->ncol; j++)
-            {
-                ratlas_assertnum(cnewval->ptr[j]);
+            for (j = 0; j < rmat->ncol; j++) {
+                ratlas_assertnum(RARRAY_PTR(newval)[j]);
                 offset = i + j*rmat->nrow;
-                ratlas_set_float(rmat->data, offset,
-                        cnewval->ptr[j]);
+                ratlas_set_float(rmat->data, offset, RARRAY_PTR(newval)[j]);
             }
             break;
         case RATLAS_DCOMPLEX:
-            for (j = 0; j < rmat->ncol; j++)
-            {
+            for (j = 0; j < rmat->ncol; j++) {
                 offset = i + j*rmat->nrow;
-                ratlas_set_complex(rmat->data, offset,
-                        cnewval->ptr[j]);
+                ratlas_set_complex(rmat->data, offset, RARRAY_PTR(newval)[j]);
             }
             break;
     }
@@ -1354,19 +1335,18 @@ VALUE ratlas_set_row_bang(VALUE self, VALUE storage, VALUE rowidx, VALUE newval)
 
 VALUE ratlas_set_rows_bang(VALUE self, VALUE storage, VALUE rowidx, VALUE newval)
 {
-    struct RArray *crowidx, *cnewval;
+/*     struct RArray *crowidx, *cnewval; */
     int i;
 
     Check_Type(rowidx, T_ARRAY);
-    crowidx = RARRAY(rowidx);
-    cnewval = RARRAY(newval);
-    if (cnewval->len != crowidx->len)
+/*     crowidx = RARRAY(rowidx); */
+/*     cnewval = RARRAY(newval); */
+    if (RARRAY_LEN(newval) != RARRAY_LEN(rowidx))
         rb_raise(rb_eArgError, "Index and argument size must match.");
     
-    for (i = 0;  i < crowidx->len; i++)
-    {
-        ratlas_set_row_bang(self, storage, *(crowidx->ptr + i),
-                cnewval->ptr[i]);
+    for (i = 0;  i < RARRAY_LEN(rowidx); i++) {
+        ratlas_set_row_bang(self, storage, RARRAY_PTR(rowidx)[i],
+                RARRAY_PTR(newval)[i]);
     }    
     return storage;
         
@@ -1418,11 +1398,11 @@ VALUE ratlas_get_one(VALUE self, VALUE storage, VALUE index)
 /*
  * Using a Array of indices, get values from Ratlas_Matrix.  Return as
  * vector.  The index run continously in Row Major order.  */
-VALUE ratlas_get_many(VALUE self, VALUE storage, VALUE idx)
+VALUE ratlas_get_many(VALUE self, VALUE storage, VALUE ary)
 {
-    struct RArray *ary;
-    VALUE *idxp;
-    int i, j;
+/*     struct RArray *ary; */
+    VALUE idx;
+    int i, j, arylen;
     long int nelem;
     Ratlas_Matrix *retvec, *rmat;
     double *rv, *rm;
@@ -1431,18 +1411,19 @@ VALUE ratlas_get_many(VALUE self, VALUE storage, VALUE idx)
     Data_Get_Struct(storage, Ratlas_Matrix, rmat);
     nelem = rmat->nrow * rmat->ncol;
     
-    ary = RARRAY(idx);
+/*     ary = RARRAY(idx); */
+    arylen = RARRAY_LEN(ary);
     switch (rmat->type) { 
         case  RATLAS_DFLOAT:
             retvec = ratlas_matrix_alloc(RATLAS_DFLOAT, 
-                    RATLAS_DENSE, ary->len, 1, NULL);
+                    RATLAS_DENSE, arylen, 1, NULL);
             rv = (double *) retvec->data;
             rm = (double *) rmat->data;
-            for (j = 0; j < ary->len; j++)
+            for (j = 0; j < arylen; j++)
             {
-                idxp = ary->ptr + j;
-                Check_Type(*idxp, T_FIXNUM);
-                i = FIX2INT(*idxp);
+                idx = RARRAY_PTR(ary)[j];
+                Check_Type(idx, T_FIXNUM);
+                i = FIX2INT(idx);
                 if (i < 0) i += nelem;
                 if ((i > nelem - 1) || (i < 0))
                     rb_raise(rb_eArgError, "Index out of range.");
@@ -1452,20 +1433,17 @@ VALUE ratlas_get_many(VALUE self, VALUE storage, VALUE idx)
             break;
         case RATLAS_DCOMPLEX:
             retvec = ratlas_matrix_alloc(RATLAS_DCOMPLEX, 
-                    RATLAS_DENSE, ary->len, 1, NULL);
+                    RATLAS_DENSE, arylen, 1, NULL);
             cv = (Ratlas_Complex *) retvec->data;
             cm = (Ratlas_Complex *) rmat->data;
-            for (j = 0; j < ary->len; j++)
-            {
-                idxp = ary->ptr + j;
-                Check_Type(*idxp, T_FIXNUM);
-                i = FIX2INT(*idxp);
+            for (j = 0; j < arylen; j++) {
+                idx = RARRAY_PTR(ary)[j];
+                Check_Type(idx, T_FIXNUM);
+                i = FIX2INT(idx);
                 if (i < 0) i += nelem;
                 if ((i > nelem - 1) || (i < 0))
-                    rb_raise(rb_eArgError, 
-                        "Index out of range.");
-                i = ratlas_swap_major(rmat->nrow, 
-                        rmat->ncol, i);
+		    rb_raise(rb_eArgError, "Index out of range.");
+                i = ratlas_swap_major(rmat->nrow, rmat->ncol, i);
                 cv[j].r = cm[i].r;
                 cv[j].i = cm[i].i;
             }
@@ -1512,8 +1490,7 @@ VALUE ratlas_get_by_range(VALUE self, VALUE storage, VALUE range)
                     RATLAS_DENSE, range_len, 1, NULL);
             rv = (double *) retvec->data;
             rm = (double *) rmat->data;
-            for (i = first; i <= last; i++)
-            {
+            for (i = first; i <= last; i++) {
                 idx = ratlas_swap_major(rmat->nrow, rmat->ncol, i);
                 rv[j++] = rm[idx];
             }
@@ -1523,8 +1500,7 @@ VALUE ratlas_get_by_range(VALUE self, VALUE storage, VALUE range)
                     RATLAS_DENSE, range_len, 1, NULL);
             cv = (Ratlas_Complex *) retvec->data;
             cm = (Ratlas_Complex *) rmat->data;
-            for (i = first; i <= last ; i++)
-            {
+            for (i = first; i <= last ; i++) {
                 idx = ratlas_swap_major(rmat->nrow, rmat->ncol, i);
                 cv[j].r = cm[idx].r;
                 cv[j].i = cm[idx].i;
@@ -1555,14 +1531,10 @@ VALUE ratlas_get2d_one(VALUE self, VALUE storage, VALUE row, VALUE col)
     Check_Type(col, T_FIXNUM);    
     m = FIX2INT(row);
     n = FIX2INT(col);
-    if (m < 0)
-        m += rmat->nrow;
-    if (m > rmat->nrow - 1)
-        rb_raise(rb_eArgError, "Index out of range.");
-    if (n < 0)
-        n += rmat->ncol;
-    if (n > rmat->ncol - 1)
-        rb_raise(rb_eArgError, "Index out of range.");
+    if (m < 0) m += rmat->nrow;
+    if (m > rmat->nrow - 1) rb_raise(rb_eArgError, "Index out of range.");
+    if (n < 0) n += rmat->ncol;
+    if (n > rmat->ncol - 1) rb_raise(rb_eArgError, "Index out of range.");
 
     idx = n + m * rmat->ncol;
     return ratlas_get_one(self, storage, INT2FIX(idx));
@@ -1575,28 +1547,28 @@ VALUE ratlas_get2d_one(VALUE self, VALUE storage, VALUE row, VALUE col)
 VALUE ratlas_get2d_many(VALUE self, VALUE storage, VALUE rows, VALUE cols)
 {
     Ratlas_Matrix *mat, *retmat;
-    struct RArray *crows, *ccols;
-    int i, j, irow, icol;
+/*     struct RArray *crows, *ccols; */
+    int i, j, irow, icol, rowlen, collen;
     unsigned long int isrc, idest;
     double *rsrc, *rdest;
     Ratlas_Complex *csrc, *cdest;
 
     Data_Get_Struct(storage, Ratlas_Matrix, mat);
-    crows = RARRAY(rows);
-    ccols = RARRAY(cols);
-    retmat = ratlas_matrix_alloc(mat->type, mat->matrixtype, crows->len,
-            ccols->len, NULL);
+/*     crows = RARRAY(rows); */
+/*     ccols = RARRAY(cols); */
+    rowlen = RARRAY_LEN(rows);
+    collen = RARRAY_LEN(cols);
+    retmat = ratlas_matrix_alloc(mat->type, mat->matrixtype, rowlen, collen,
+		    NULL);
     switch (mat->type) {
         case RATLAS_DFLOAT:
             rsrc = (double *) mat->data;
             rdest = (double *) retmat->data;
-            for (i = 0; i < crows->len; i++)
-            {
-                irow = FIX2INT(crows->ptr[i]);
+            for (i = 0; i < rowlen; i++) {
+                irow = FIX2INT(RARRAY_PTR(rows)[i]);
                 if (irow > (mat->nrow-1)) goto error;
-                for (j = 0; j < ccols->len; j++)
-                {
-                    icol = FIX2INT(ccols->ptr[j]);
+                for (j = 0; j < collen; j++) {
+                    icol = FIX2INT(RARRAY_PTR(cols)[j]);
                     if (icol > (mat->ncol-1)) goto error;
                     idest = i + j*retmat->nrow;
                     isrc = irow + icol*mat->nrow;
@@ -1605,15 +1577,13 @@ VALUE ratlas_get2d_many(VALUE self, VALUE storage, VALUE rows, VALUE cols)
             }
             break;
         case RATLAS_DCOMPLEX:
-            for (i = 0; i < crows->len; i++)
-            {
+            for (i = 0; i < rowlen; i++) {
                 csrc = (Ratlas_Complex *) mat->data;
                 cdest = (Ratlas_Complex *) retmat->data;
-                irow = FIX2INT(crows->ptr[i]);
+                irow = FIX2INT(RARRAY_PTR(rows)[i]);
                 if (irow > (mat->nrow-1)) goto error;
-                for (j = 0; j < ccols->len; j++)
-                {
-                    icol = FIX2INT(ccols->ptr[j]);
+                for (j = 0; j < collen; j++) {
+                    icol = FIX2INT(RARRAY_PTR(cols)[j]);
                     if (icol > (mat->ncol-1)) goto error;
                     idest = i + j*retmat->nrow;
                     isrc = irow + icol*mat->nrow;
@@ -1644,7 +1614,7 @@ VALUE ratlas_get2d_by_range(VALUE self, VALUE storage, VALUE rowrange,
     double *rsrc, *rdest;
     Ratlas_Complex *csrc, *cdest;
 
-    if (    (rb_obj_is_kind_of(rowrange, range_class) != Qtrue) ||
+    if ((rb_obj_is_kind_of(rowrange, range_class) != Qtrue) ||
         (rb_obj_is_kind_of(colrange, range_class) != Qtrue) )
         rb_raise(rb_eArgError, "Expect Range.");
     colfirst = FIX2INT(rb_funcall(colrange, id_first, 0));
@@ -1657,10 +1627,8 @@ VALUE ratlas_get2d_by_range(VALUE self, VALUE storage, VALUE rowrange,
     if (rowfirst < 0) rowfirst += rmat->nrow;
     if (collast < 0) collast += rmat->ncol;
     if (rowlast < 0) rowlast += rmat->nrow;
-    if ( rb_funcall(colrange, id_exclude_end, 0) == Qtrue)
-        collast -= 1;
-    if ( rb_funcall(rowrange, id_exclude_end, 0) == Qtrue)
-        rowlast -= 1;
+    if ( rb_funcall(colrange, id_exclude_end, 0) == Qtrue) collast -= 1;
+    if ( rb_funcall(rowrange, id_exclude_end, 0) == Qtrue) rowlast -= 1;
 
     if (colfirst > collast)
                rb_raise(rb_eArgError, "Expect an increasing range.");
@@ -1679,11 +1647,9 @@ VALUE ratlas_get2d_by_range(VALUE self, VALUE storage, VALUE rowrange,
                 RATLAS_DENSE, rowrange_len, colrange_len, NULL);
             rsrc = (double *) rmat->data;
             rdest = (double *) retmat->data;
-            for (i = rowfirst; i <= rowlast; i++)
-            {
+            for (i = rowfirst; i <= rowlast; i++) {
                 ic = 0;
-                for (j = colfirst; j <= collast; j++)
-                {
+                for (j = colfirst; j <= collast; j++) {
                     idest = ir + ic * retmat->nrow;
                     isrc = i + j * rmat->nrow;
                     rdest[idest] = rsrc[isrc];
@@ -1697,11 +1663,9 @@ VALUE ratlas_get2d_by_range(VALUE self, VALUE storage, VALUE rowrange,
                 RATLAS_DENSE, rowrange_len, colrange_len, NULL);
             csrc = (Ratlas_Complex *) rmat->data;
             cdest = (Ratlas_Complex *) retmat->data;
-            for (i = rowfirst; i <= rowlast ; i++)
-            {
+            for (i = rowfirst; i <= rowlast ; i++) {
                 ic = 0;
-                for (j = colfirst; j <= collast; j++)
-                {
+                for (j = colfirst; j <= collast; j++) {
                     idest = ir + ic * retmat->nrow;
                     isrc = i + j * rmat->nrow;
                     cdest[idest].r = csrc[isrc].r;
@@ -1731,8 +1695,7 @@ VALUE ratlas_set_one_bang(VALUE self, VALUE storage, VALUE index, VALUE newval)
     idx = FIX2INT(index);
     Data_Get_Struct(storage, Ratlas_Matrix, rmat);
     nelem = rmat->nrow * rmat->ncol;
-    if (idx < 0)
-        idx += nelem;
+    if (idx < 0) idx += nelem;
     if ((idx > nelem - 1) || (idx < 0))
         rb_raise(rb_eArgError, "Index out of range.");
     idx = ratlas_swap_major(rmat->nrow, rmat->ncol, idx);
@@ -1750,11 +1713,11 @@ VALUE ratlas_set_one_bang(VALUE self, VALUE storage, VALUE index, VALUE newval)
 
 
 
-VALUE ratlas_set_many_bang(VALUE self, VALUE storage, VALUE idx, VALUE newvals)
+VALUE ratlas_set_many_bang(VALUE self, VALUE storage, VALUE ary, VALUE newvals)
 {
-    struct RArray *ary;
-    VALUE *idxp;
-    int i, j;
+/*     struct RArray *ary; */
+    VALUE idx;
+    int i, j, arylen;
     long int nelem;
     Ratlas_Matrix *rvec, *rmat;
     double *rsrc, *rdest;
@@ -1762,42 +1725,37 @@ VALUE ratlas_set_many_bang(VALUE self, VALUE storage, VALUE idx, VALUE newvals)
     
     Data_Get_Struct(storage, Ratlas_Matrix, rmat);
     nelem = rmat->nrow * rmat->ncol;
-    ary = RARRAY(idx);
+/*     ary = RARRAY(idx); */
     Data_Get_Struct(newvals, Ratlas_Matrix, rvec);
     if (rvec->ncol != 1) rb_raise(rb_eArgError, "Input must be vector.");
-
+    
+    arylen = RARRAY_LEN(ary);
     switch (rmat->type) { 
         case  RATLAS_DFLOAT:
             rsrc = (double *)rvec->data;
             rdest = (double *)rmat->data;
-            for (j = 0; j < ary->len; j++)
-            {
-                idxp = ary->ptr + j;
-                Check_Type(*idxp, T_FIXNUM);
-                i = FIX2INT(*idxp);
+            for (j = 0; j < arylen; j++) {
+                idx = RARRAY_PTR(ary)[j];
+                Check_Type(idx, T_FIXNUM);
+                i = FIX2INT(idx);
                 if (i < 0) i += nelem;
                 if ((i > nelem - 1) || (i < 0))
-                    rb_raise(rb_eArgError, 
-                        "Index out of range.");
-                i = ratlas_swap_major(rmat->nrow, rmat->ncol,
-                               i);
+                    rb_raise(rb_eArgError, "Index out of range.");
+                i = ratlas_swap_major(rmat->nrow, rmat->ncol, i);
                 rdest[i] = rsrc[j];
             }
             break;
         case RATLAS_DCOMPLEX:
             csrc = (Ratlas_Complex *) rvec->data;
             cdest = (Ratlas_Complex *) rmat->data;
-            for (j = 0; j < ary->len; j++)
-            {
-                idxp = ary->ptr + j;
-                Check_Type(*idxp, T_FIXNUM);
-                i = FIX2INT(*idxp);
+            for (j = 0; j < arylen; j++) {
+                idx = RARRAY_PTR(ary)[j];
+                Check_Type(idx, T_FIXNUM);
+                i = FIX2INT(idx);
                 if (i < 0) i += nelem;
                 if ((i > nelem - 1) || (i < 0))
-                    rb_raise(rb_eArgError, 
-                        "Index out of range.");
-                i = ratlas_swap_major(rmat->nrow, rmat->ncol, 
-                        i);
+                    rb_raise(rb_eArgError, "Index out of range.");
+                i = ratlas_swap_major(rmat->nrow, rmat->ncol, i);
                 cdest[i].r = csrc[j].r;
                 cdest[i].i = csrc[j].i;
             }
@@ -1849,8 +1807,7 @@ VALUE ratlas_set_by_range_bang(VALUE self, VALUE storage, VALUE range,
         case  RATLAS_DFLOAT:
             rsrc = (double *) newmat->data;
             rdest = (double *) mat->data;
-            for (i = first; i <= last; i++)
-            {
+            for (i = first; i <= last; i++) {
                 idx = ratlas_swap_major(mat->nrow, mat->ncol, i);
                 rdest[idx] = rsrc[j];
                 j++;
@@ -1859,8 +1816,7 @@ VALUE ratlas_set_by_range_bang(VALUE self, VALUE storage, VALUE range,
         case RATLAS_DCOMPLEX:
             csrc = (Ratlas_Complex *) newmat->data;
             cdest = (Ratlas_Complex *) mat->data;
-            for (i = first; i <= last ; i++)
-            {
+            for (i = first; i <= last ; i++) {
                 idx = ratlas_swap_major(mat->nrow, mat->ncol, i);
                 cdest[idx].r = csrc[j].r;
                 cdest[idx].i = csrc[j].i;
@@ -1887,14 +1843,10 @@ VALUE ratlas_set2d_one_bang(VALUE self, VALUE storage, VALUE row, VALUE col,
     Data_Get_Struct(storage, Ratlas_Matrix, rmat);
     m = FIX2INT(row);
     n = FIX2INT(col);
-    if (m < 0)
-        m += rmat->nrow;
-    if (m > rmat->nrow - 1)
-        rb_raise(rb_eArgError, "Index out of range.");
-    if (n < 0)
-        n += rmat->ncol;
-    if (n > rmat->ncol - 1)
-        rb_raise(rb_eArgError, "Index out of range.");
+    if (m < 0) m += rmat->nrow;
+    if (m > rmat->nrow - 1) rb_raise(rb_eArgError, "Index out of range.");
+    if (n < 0) n += rmat->ncol;
+    if (n > rmat->ncol - 1) rb_raise(rb_eArgError, "Index out of range.");
 
     idx = n + m * rmat->ncol;
     return ratlas_set_one_bang(self, storage, INT2FIX(idx), newval);
@@ -1907,42 +1859,40 @@ VALUE ratlas_set2d_many_bang(VALUE self, VALUE storage, VALUE rows, VALUE cols,
         VALUE newval)
 {
     Ratlas_Matrix *mat, *newmat;
-    struct RArray *rowarr, *colarr;
-    int ir, ic, row, col;
+/*     struct RArray *rowarr, *colarr; */
+    int ir, ic, row, col, rowlen, collen;
     unsigned long int isrc=0, idest;
     double *rsrc, *rdest;
     Ratlas_Complex *csrc, *cdest;
 
     Check_Type(rows, T_ARRAY);
     Check_Type(cols, T_ARRAY);
-    rowarr = RARRAY(rows);
-    colarr = RARRAY(cols);
+    rowlen = RARRAY_LEN(rows);
+    collen = RARRAY_LEN(cols);
+/*     rowarr = RARRAY(rows); */
+/*     colarr = RARRAY(cols); */
     Data_Get_Struct(storage, Ratlas_Matrix, mat);
     Data_Get_Struct(newval, Ratlas_Matrix, newmat);
     if (mat->type != newmat->type || mat->matrixtype != newmat->matrixtype)
                rb_raise(rb_eArgError, "Conflicting types for matrices.");
-    if (rowarr->len != newmat->nrow || colarr->len != newmat->ncol)
+    if (rowlen != newmat->nrow || collen != newmat->ncol)
         rb_raise(rb_eArgError, "Incorrect size of argument.");
     switch (mat->type) {
         case RATLAS_DFLOAT:    
             rsrc = (double *) newmat->data;
             rdest = (double *) mat->data;
-            for (ic=0; ic < colarr->len; ic++)
-            {
-                Check_Type(colarr->ptr[ic], T_FIXNUM);
-                col = FIX2INT(colarr->ptr[ic]);
+            for (ic=0; ic < collen; ic++) {
+                Check_Type(RARRAY_PTR(cols)[ic], T_FIXNUM);
+                col = FIX2INT(RARRAY_PTR(cols)[ic]);
                 if (col < 0) col += mat->ncol;
                 if (col > mat->ncol -1)
-                    rb_raise(rb_eArgError, 
-                            "Index out of range.");
-                for (ir=0; ir < rowarr->len; ir++)
-                {
-                    Check_Type(rowarr->ptr[ir], T_FIXNUM);
-                    row = FIX2INT(rowarr->ptr[ir]);
+		       	rb_raise(rb_eArgError, "Index out of range.");
+                for (ir=0; ir < rowlen; ir++) {
+                    Check_Type(RARRAY_PTR(rows)[ir], T_FIXNUM);
+                    row = FIX2INT(RARRAY_PTR(rows)[ir]);
                     if (row < 0) row += mat->nrow;
                     if (row > mat->nrow -1)
-                        rb_raise(rb_eArgError,
-                            "Index out of range.");    
+                        rb_raise(rb_eArgError, "Index out of range.");    
                     idest = row + col * mat->nrow;
                     rdest[idest] = rsrc[isrc];
                     isrc++;
@@ -1952,22 +1902,18 @@ VALUE ratlas_set2d_many_bang(VALUE self, VALUE storage, VALUE rows, VALUE cols,
         case RATLAS_DCOMPLEX:
             csrc = (Ratlas_Complex *)newmat->data;
             cdest = (Ratlas_Complex *)mat->data;
-            for (ic=0; ic < colarr->len; ic++)
-            {
-                Check_Type(colarr->ptr[ic], T_FIXNUM);
-                col = FIX2INT(colarr->ptr[ic]);
+            for (ic=0; ic < collen; ic++) {
+                Check_Type(RARRAY_PTR(cols)[ic], T_FIXNUM);
+                col = FIX2INT(RARRAY_PTR(cols)[ic]);
                 if (col < 0) col += mat->ncol;
                 if (col > mat->ncol -1)
-                    rb_raise(rb_eArgError, 
-                            "Index out of range.");
-                for (ir=0; ir < rowarr->len; ir++)
-                {
-                    Check_Type(rowarr->ptr[ir], T_FIXNUM);
-                    row = FIX2INT(rowarr->ptr[ir]);
+                    rb_raise(rb_eArgError, "Index out of range.");
+                for (ir=0; ir < rowlen; ir++) {
+                    Check_Type(RARRAY_PTR(rows)[ir], T_FIXNUM);
+                    row = FIX2INT(RARRAY_PTR(rows)[ir]);
                     if (row < 0) row += mat->nrow;
                     if (row > mat->nrow -1)
-                        rb_raise(rb_eArgError,
-                            "Index out of range.");    
+                        rb_raise(rb_eArgError, "Index out of range.");    
                     idest = row + col * mat->nrow;
                     cdest[idest].r = csrc[isrc].r;
                     cdest[idest].i = csrc[isrc].i;
@@ -2033,11 +1979,9 @@ VALUE ratlas_set2d_by_range_bang(VALUE self, VALUE storage, VALUE rowrange,
         case  RATLAS_DFLOAT:
             rsrc = (double *) newmat->data;
             rdest = (double *) mat->data;
-            for (i = rowfirst; i <= rowlast; i++)
-            {
+            for (i = rowfirst; i <= rowlast; i++) {
                 ic = 0;
-                for (j = colfirst; j <= collast; j++)
-                {
+                for (j = colfirst; j <= collast; j++) {
                     isrc = ir + ic * newmat->nrow;
                     idest = i + j * mat->nrow;
                     rdest[idest] = rsrc[isrc];
@@ -2049,11 +1993,9 @@ VALUE ratlas_set2d_by_range_bang(VALUE self, VALUE storage, VALUE rowrange,
         case RATLAS_DCOMPLEX:
             csrc = (Ratlas_Complex *) newmat->data;
             cdest = (Ratlas_Complex *) mat->data;
-            for (i = rowfirst; i <= rowlast ; i++)
-            {
+            for (i = rowfirst; i <= rowlast ; i++) {
                 ic = 0;
-                for (j = colfirst; j <= collast; j++)
-                {
+                for (j = colfirst; j <= collast; j++) {
                     isrc = ir + ic * newmat->nrow;
                     idest = i + j * mat->nrow;
                     cdest[idest].r = csrc[isrc].r;
@@ -2153,8 +2095,7 @@ VALUE ratlas_vcat(VALUE self, VALUE stor1, VALUE stor2)
     mat1_colsize = mat1->nrow*elemsize;
     mat2_colsize = mat2->nrow*elemsize;
     newmat_colsize = mat1_colsize + mat2_colsize;
-    for (j = 0; j < newmat->ncol; j++)
-    {
+    for (j = 0; j < newmat->ncol; j++) {
         offset = j * newmat_colsize;
         offset1 = j * mat1_colsize;
         offset2 = j * mat2_colsize;
@@ -2184,8 +2125,7 @@ VALUE ratlas_map_bang(VALUE self, VALUE stor, VALUE block)
     switch (mat->type) {
         case RATLAS_DFLOAT:
             r = (double *) mat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 val = rb_float_new(r[i]);
                 val = rb_funcall2(block, id_call, 1, &val);
                 r[i] = NUM2DBL(val);
@@ -2193,8 +2133,7 @@ VALUE ratlas_map_bang(VALUE self, VALUE stor, VALUE block)
             break;
         case RATLAS_DCOMPLEX:
             c = (Ratlas_Complex *) mat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 val = ratlas_rb_complex_new(c[i].r, c[i].i);
                 val = rb_funcall2(block, id_call, 1, &val);
                 c[i].r = NUM2DBL(rb_ivar_get(val, id_atre));
@@ -2225,16 +2164,14 @@ VALUE ratlas_each(VALUE self, VALUE stor, VALUE block)
     switch (mat->type) {
         case RATLAS_DFLOAT:
             r = (double *) mat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 val = rb_float_new(r[ratlas_swap_major(m,n,i)]);
                 rb_funcall2(block, id_call, 1, &val);
             }
             break;
         case RATLAS_DCOMPLEX:
             c = (Ratlas_Complex *) mat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 ci = c[ratlas_swap_major(m,n,i)];
                 val = ratlas_rb_complex_new(ci.r, ci.i);
                 rb_funcall2(block, id_call, 1, &val);
@@ -2263,8 +2200,7 @@ VALUE ratlas_each_with_index(VALUE self, VALUE stor, VALUE block)
     switch (mat->type) {
         case RATLAS_DFLOAT:
             r = (double *) mat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 val = rb_float_new(r[ratlas_swap_major(m,n,i)]);
                 idx = INT2FIX(i);
                 ary = rb_ary_new3(2, val, idx);
@@ -2273,8 +2209,7 @@ VALUE ratlas_each_with_index(VALUE self, VALUE stor, VALUE block)
             break;
         case RATLAS_DCOMPLEX:
             c = (Ratlas_Complex *) mat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 ci = c[ratlas_swap_major(m,n,i)];
                 val = ratlas_rb_complex_new(ci.r, ci.i);
                 idx = INT2FIX(i);
@@ -2307,8 +2242,7 @@ VALUE ratlas_each_with_ijindex(VALUE self, VALUE stor, VALUE block)
         case RATLAS_DFLOAT:
             r = (double *) mat->data;
             for (i = 0; i < m; i++)
-              for (j = 0; j < n; j++)
-              {
+              for (j = 0; j < n; j++) {
                 ary = rb_ary_new3(3, rb_float_new(r[j*m+i]), 
                     INT2FIX(i), INT2FIX(j));
                 rb_funcall2(block, id_call, 1, &ary);
@@ -2317,8 +2251,7 @@ VALUE ratlas_each_with_ijindex(VALUE self, VALUE stor, VALUE block)
         case RATLAS_DCOMPLEX:
             c = (Ratlas_Complex *) mat->data;
             for (i = 0; i < m; i++)
-              for (j = 0; j < n; j++)
-              {
+              for (j = 0; j < n; j++) {
                 ci = c[j*m+i];
                 
                 ary = rb_ary_new3(3, ratlas_rb_complex_new(ci.r, ci.i),
@@ -2338,18 +2271,19 @@ VALUE ratlas_zip_bang(VALUE self, VALUE stor, VALUE stors, VALUE block)
     VALUE *tmparr, val;
     Ratlas_Matrix *mat0, **mats;
     unsigned long int i, nelem;
-    struct RArray *argarr;
-    int iarg;
+/*     struct RArray *argarr; */
+    int iarg, storslen;
     Ratlas_Complex *ctmp, *cmat0;
     
     Data_Get_Struct(stor, Ratlas_Matrix, mat0);
     nelem = mat0->nrow * mat0->ncol;
-    argarr = RARRAY(stors);
-    mats = ALLOCA_N(Ratlas_Matrix*, argarr->len);
+/*     argarr = RARRAY(stors); */
+    storslen = RARRAY_LEN(stors);
+    mats = ALLOCA_N(Ratlas_Matrix*, storslen);
 
-    for (i = 0; i < argarr->len; i++)
+    for (i = 0; i < storslen; i++)
     {
-        Data_Get_Struct(argarr->ptr[i], Ratlas_Matrix, mats[i]);
+        Data_Get_Struct(RARRAY_PTR(stors)[i], Ratlas_Matrix, mats[i]);
         if ( (mats[i]->nrow != mat0->nrow) || 
                 (mats[i]->ncol != mat0->ncol) || 
                 (mats[i]->type != mat0->type) || 
@@ -2358,34 +2292,32 @@ VALUE ratlas_zip_bang(VALUE self, VALUE stor, VALUE stors, VALUE block)
                     "Matrix not of same size or type.");
     }
     
-    tmparr = ALLOCA_N(VALUE, argarr->len + 1);
+    tmparr = ALLOCA_N(VALUE, storslen + 1);
 
     switch (mat0->type) {
         case RATLAS_DFLOAT:
             for (i = 0; i < nelem; i++)
             {
                 tmparr[0] = rb_float_new( ((double *)mat0->data)[i] );
-                for (iarg = 0; iarg < argarr->len; iarg++)
+                for (iarg = 0; iarg < storslen; iarg++)
                 {
                     tmparr[iarg+1] = rb_float_new(
                             ((double *)mats[iarg]->data)[i] );    
                 }
-            val = rb_funcall2(block, id_call, argarr->len + 1, tmparr);
+            val = rb_funcall2(block, id_call, storslen + 1, tmparr);
             ( (double *)mat0->data )[i] = NUM2DBL(val);
             }
             break;
         case RATLAS_DCOMPLEX:
             cmat0 = (Ratlas_Complex *) mat0->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 tmparr[0] = ratlas_rb_complex_new(cmat0[i].r, cmat0[i].i);
-                for (iarg = 0; iarg < argarr->len; iarg++)
-                {
+                for (iarg = 0; iarg < storslen; iarg++) {
                     ctmp = (Ratlas_Complex *) mats[iarg]->data;
                     tmparr[iarg+1] = ratlas_rb_complex_new(
                         ctmp[i].r, ctmp[i].i);    
                 }
-                val = rb_funcall2(block, id_call, argarr->len + 1, tmparr);
+                val = rb_funcall2(block, id_call, storslen + 1, tmparr);
                 cmat0[i].r = NUM2DBL(rb_ivar_get(val, id_atre));
                 cmat0[i].i = NUM2DBL(rb_ivar_get(val, id_atim));
             }
@@ -2463,35 +2395,29 @@ VALUE ratlas_storage_dup(VALUE self, VALUE oldstore)
 VALUE ratlas_storage_alloc(VALUE self, VALUE arg)
 {
     Ratlas_Matrix *mat;
-    struct RArray *carg;
-    int size1, size2;
+/*     struct RArray *carg; */
+    int size1, size2, arglen;
 
-    if (TYPE(arg) == T_FIXNUM)
-    {
+    if (TYPE(arg) == T_FIXNUM) {
         size1 = FIX2INT(arg);
         size2 = 1;
-    } else
-    {
+    } else {
         Check_Type(arg, T_ARRAY);
-        carg = RARRAY(arg);
-        if (carg->len > 2) 
-            rb_raise(rb_eArgError, "Unexpected dimensions.");
-        Check_Type(carg->ptr[0], T_FIXNUM);
-        size1 = FIX2INT(carg->ptr[0]);
-        if (carg->len == 2)
-        {
-            Check_Type(carg->ptr[1], T_FIXNUM);
-            size2 = FIX2INT(carg->ptr[1]);
-        } else
-        {
+	arglen = RARRAY_LEN(arg);
+/*         carg = RARRAY(arg); */
+        if (arglen > 2) rb_raise(rb_eArgError, "Unexpected dimensions.");
+        Check_Type(RARRAY_PTR(arg)[0], T_FIXNUM);
+        size1 = FIX2INT(RARRAY_PTR(arg)[0]);
+        if (arglen == 2) {
+            Check_Type(RARRAY_PTR(arg)[1], T_FIXNUM);
+            size2 = FIX2INT(RARRAY_PTR(arg)[1]);
+        } else {
             size2 = 1;
         }
     }    
-    mat = ratlas_matrix_alloc(RATLAS_DFLOAT, RATLAS_DENSE, 
-            size1, size2, NULL);
+    mat = ratlas_matrix_alloc(RATLAS_DFLOAT, RATLAS_DENSE, size1, size2, NULL);
 
-    return Data_Wrap_Struct(ratlas_storage_class, 0, ratlas_matrix_free,
-            mat);
+    return Data_Wrap_Struct(ratlas_storage_class, 0, ratlas_matrix_free, mat);
 }
 
 
@@ -2500,27 +2426,23 @@ VALUE ratlas_storage_alloc(VALUE self, VALUE arg)
 VALUE ratlas_complex_storage_alloc(VALUE self, VALUE arg)
 {
     Ratlas_Matrix *mat;
-    struct RArray *carg;
-    int size1, size2;
+/*     struct RArray *carg; */
+    int size1, size2, arglen;
 
-    if (TYPE(arg) == T_FIXNUM)
-    {
+    if (TYPE(arg) == T_FIXNUM) {
         size1 = FIX2INT(arg);
         size2 = 1;
-    } else
-    {
+    } else {
         Check_Type(arg, T_ARRAY);
-        carg = RARRAY(arg);
-        if (carg->len > 2) 
-            rb_raise(rb_eArgError, "Unexpected dimensions.");
-        Check_Type(carg->ptr[0], T_FIXNUM);
-        size1 = FIX2INT(carg->ptr[0]);
-        if (carg->len == 2)
-        {
-            Check_Type(carg->ptr[1], T_FIXNUM);
-            size2 = FIX2INT(carg->ptr[1]);
-        } else
-        {
+	arglen = RARRAY_LEN(arg);
+/*         carg = RARRAY(arg); */
+        if (arglen > 2) rb_raise(rb_eArgError, "Unexpected dimensions.");
+        Check_Type(RARRAY_PTR(arg)[0], T_FIXNUM);
+        size1 = FIX2INT(RARRAY_PTR(arg)[0]);
+        if (arglen == 2) {
+            Check_Type(RARRAY_PTR(arg)[1], T_FIXNUM);
+            size2 = FIX2INT(RARRAY_PTR(arg)[1]);
+        } else {
             size2 = 1;
         }
     }    
@@ -2551,8 +2473,7 @@ VALUE ratlas_re(VALUE self, VALUE stor)
             newmat = ratlas_matrix_alloc(RATLAS_DFLOAT, 
                     RATLAS_DENSE, mat->nrow, mat->ncol,
                     NULL);
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 ((double *)newmat->data)[i] = 
                     ((Ratlas_Complex *)mat->data)[i].r;
             }
@@ -2586,8 +2507,7 @@ VALUE ratlas_im(VALUE self, VALUE stor)
         case RATLAS_DFLOAT:
             break;
         case RATLAS_DCOMPLEX:
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 ((double *)newmat->data)[i] = 
                     ((Ratlas_Complex *)mat->data)[i].i;
             }
@@ -2603,14 +2523,13 @@ VALUE ratlas_reshape_bang(VALUE self, VALUE stor, VALUE arg)
 {
     Ratlas_Matrix *mat;
     unsigned long int nelem;
-    int size1, size2;
-    struct RArray *carg;
+    int size1, size2, arglen;
+/*     struct RArray *carg; */
 
     Data_Get_Struct(stor, Ratlas_Matrix, mat);
     nelem = mat->nrow * mat->ncol;
 
-    if (TYPE(arg) == T_FIXNUM)
-    {
+    if (TYPE(arg) == T_FIXNUM) {
         size1 = FIX2INT(arg);
         if (size1 != nelem)
             rb_raise(rb_eArgError, "Illegal reshape.");
@@ -2618,23 +2537,20 @@ VALUE ratlas_reshape_bang(VALUE self, VALUE stor, VALUE arg)
     } else
     {
         Check_Type(arg, T_ARRAY);
-        carg = RARRAY(arg);
-        if (carg->len > 2) 
-            rb_raise(rb_eArgError, "Unexpected dimensions.");
-        Check_Type(carg->ptr[0], T_FIXNUM);
-        size1 = NUM2INT(carg->ptr[0]);
-        if (carg->len == 2)
-        {
-            Check_Type(carg->ptr[1], T_FIXNUM);
-            size2 = NUM2INT(carg->ptr[1]);
-        } else
-        {
+/*         carg = RARRAY(arg); */
+	arglen = RARRAY_LEN(arg);
+        if (arglen > 2) rb_raise(rb_eArgError, "Unexpected dimensions.");
+        Check_Type(RARRAY_PTR(arg)[0], T_FIXNUM);
+        size1 = NUM2INT(RARRAY_PTR(arg)[0]);
+        if (arglen == 2) {
+            Check_Type(RARRAY_PTR(arg)[1], T_FIXNUM);
+            size2 = NUM2INT(RARRAY_PTR(arg)[1]);
+        } else {
             size2 = 1;
         }
     }    
     
-    if (nelem != size1*size2)
-        rb_raise(rb_eArgError, "Illegal reshape.");
+    if (nelem != size1*size2) rb_raise(rb_eArgError, "Illegal reshape.");
     mat->nrow = size1;
     mat->ncol = size2;
     return stor;
@@ -2787,8 +2703,7 @@ VALUE ratlas_add_bang(VALUE self, VALUE stor, VALUE alpha)
         case RATLAS_DFLOAT:
             ratlas_assertnum(alpha);
             c = NUM2DBL(alpha);
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 ((double *)mat->data)[i] += c;
             }
             break;
@@ -2798,8 +2713,7 @@ VALUE ratlas_add_bang(VALUE self, VALUE stor, VALUE alpha)
             c = NUM2DBL(rb_ivar_get(alpha, id_atre));
             d = NUM2DBL(rb_ivar_get(alpha, id_atim));
             cdest = (Ratlas_Complex *) mat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 cdest[i].r += c;
                 cdest[i].i += d;
             }
@@ -2828,8 +2742,7 @@ VALUE ratlas_add(VALUE self, VALUE stor, VALUE alpha)
             c = NUM2DBL(alpha);
             rsrc = (double *) mat->data;
             rdest = (double *) retmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 rdest[i] = rsrc[i] + c;
             }
             break;
@@ -2840,8 +2753,7 @@ VALUE ratlas_add(VALUE self, VALUE stor, VALUE alpha)
             d = NUM2DBL(rb_ivar_get(alpha, id_atim));
             csrc = (Ratlas_Complex *) mat->data;
             cdest = (Ratlas_Complex *) retmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 cdest[i].r = csrc[i].r + c;
                 cdest[i].i = csrc[i].i + d;
             }
@@ -2867,9 +2779,7 @@ VALUE ratlas_sub_bang(VALUE self, VALUE stor, VALUE alpha)
             ratlas_assertnum(alpha);
             c = NUM2DBL(alpha);
             for (i = 0; i < nelem; i++)
-            {
                 ((double *)mat->data)[i] -= c;
-            }
             break;
         case RATLAS_DCOMPLEX:
             //if (!ratlas_check_type(alpha, RATLAS_DCOMPLEX))
@@ -2877,8 +2787,7 @@ VALUE ratlas_sub_bang(VALUE self, VALUE stor, VALUE alpha)
             c = NUM2DBL(rb_ivar_get(alpha, id_atre));
             d = NUM2DBL(rb_ivar_get(alpha, id_atim));
             cdest = (Ratlas_Complex *) mat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 cdest[i].r -= c;
                 cdest[i].i -= d;
             }
@@ -2906,9 +2815,7 @@ VALUE ratlas_sub(VALUE self, VALUE stor, VALUE alpha)
             ratlas_assertnum(alpha);
             c = NUM2DBL(alpha);
             for (i = 0; i < nelem; i++)
-            {
                 ((double *)retmat->data)[i] = ((double *)mat->data)[i] - c;
-            }
             break;
         case RATLAS_DCOMPLEX:
             //if (!ratlas_check_type(alpha, RATLAS_DCOMPLEX))
@@ -2966,8 +2873,7 @@ static void apac(Ratlas_Matrix *amat, double *alpha, Ratlas_Matrix *cmat)
         case RATLAS_DFLOAT:
             ra = (double *) amat->data;
             rc = (double *) cmat->data;
-            for (j = 0; j < amat->ncol; j++)
-            {
+            for (j = 0; j < amat->ncol; j++) {
                 cblas_daxpy(amat->nrow, alpha[0], rc + j*cmat->nrow,
                         1, ra + j*amat->nrow, 1);
             }
@@ -2975,8 +2881,7 @@ static void apac(Ratlas_Matrix *amat, double *alpha, Ratlas_Matrix *cmat)
         case RATLAS_DCOMPLEX:
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (j = 0; j < amat->ncol; j++)
-            {
+            for (j = 0; j < amat->ncol; j++) {
                 cblas_zaxpy(amat->nrow, alpha, cc + j*cmat->nrow,
                         1, ca + j*amat->nrow, 1);
             }
@@ -3002,8 +2907,7 @@ static void apact(Ratlas_Matrix *amat, void *alpha, Ratlas_Matrix *cmat)
             ra = (double *) amat->data;
             rc = (double *) cmat->data;
             a = *((double *)alpha);
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 ra[i] += a*rc[idx];
             }
@@ -3014,8 +2918,7 @@ static void apact(Ratlas_Matrix *amat, void *alpha, Ratlas_Matrix *cmat)
             b = calpha.i;
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 c = cc[idx].r;
                 d = cc[idx].i;
@@ -3048,8 +2951,7 @@ static void atpac(Ratlas_Matrix *amat, void *alpha, Ratlas_Matrix *cmat)
             ra = (double *) amat->data;
             rc = (double *) cmat->data;
             a = *((double *)alpha);
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 ra[idx] += a*rc[i];
             }
@@ -3060,8 +2962,7 @@ static void atpac(Ratlas_Matrix *amat, void *alpha, Ratlas_Matrix *cmat)
             calpha = *((Ratlas_Complex *)alpha);
             a = calpha.r;
             b = calpha.i;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = (i%n * m + i/n);
                 c = cc[i].r;
                 d = cc[i].i;
@@ -3092,8 +2993,7 @@ static void apc_bang(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
         case RATLAS_DCOMPLEX:
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 ca[i].r += cc[i].r;
                 ca[i].i += cc[i].i;
             }
@@ -3118,8 +3018,7 @@ static void atpc_bang(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
     
     switch (amat->type) {
         case RATLAS_DFLOAT:
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 ((double *)amat->data)[idx] += ((double *)cmat->data)[i];
             }
@@ -3127,8 +3026,7 @@ static void atpc_bang(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
         case RATLAS_DCOMPLEX:
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = (i%n * m + i/n);
                 ire = i;
                 ca[idx].r += cc[ire].r;
@@ -3155,8 +3053,7 @@ static void apct_bang(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
     
     switch (amat->type) {
         case RATLAS_DFLOAT:
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 ((double *)amat->data)[i] += ((double *)cmat->data)[idx];
             }
@@ -3164,8 +3061,7 @@ static void apct_bang(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
         case RATLAS_DCOMPLEX:
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = (i%n * m + i/n);
                 ire = i;
                 ca[ire].r += cc[idx].r;
@@ -3196,14 +3092,12 @@ VALUE ratlas_madd_bang(VALUE self, VALUE transa, VALUE astor, VALUE transc,
         rb_raise(rb_eArgError, "Matrices must have same type.");
 
     /* Check dimentions.  Identify if both or none have been transposed.*/
-    if ( ctransa+ctransc == 2*ctransa)
-    {
+    if ( ctransa+ctransc == 2*ctransa) {
         if ((amat->nrow != cmat->nrow) || (amat->ncol != cmat->ncol))
             rb_raise(rb_eArgError, 
                     "Matrices must have same dimensions.");
         apc_bang(amat, cmat);
-    } else
-    {
+    } else {
         if ((amat->nrow != cmat->ncol) || (amat->ncol != cmat->nrow))
             rb_raise(rb_eArgError, 
                     "Matrices must have same dimensions.");
@@ -3242,8 +3136,7 @@ static Ratlas_Matrix* apc(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
             cr = (Ratlas_Complex *) retmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 cr[i].r = ca[i].r + cc[i].r;
                 cr[i].i = ca[i].i + cc[i].i;
             }
@@ -3276,8 +3169,7 @@ static Ratlas_Matrix* atpc(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
             ra = (double *) amat->data;
             rc = (double *) cmat->data;
             rr = (double *) retmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 rr[i] = ra[idx] + rc[i];
             }
@@ -3286,8 +3178,7 @@ static Ratlas_Matrix* atpc(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
             cr = (Ratlas_Complex *) retmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = (i%n * m + i/n);
                 ire = i;
                 cr[i].r = ca[idx].r + cc[i].r;
@@ -3323,8 +3214,7 @@ static Ratlas_Matrix* apct(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
             rr = (double *) retmat->data;
             ra = (double *) amat->data;
             rc = (double *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 rr[i] = ra[i] + rc[idx];
             }
@@ -3333,8 +3223,7 @@ static Ratlas_Matrix* apct(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
             cr = (Ratlas_Complex *) retmat->data;
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = (i%n * m + i/n);
                 cr[i].r = ca[i].r + cc[idx].r;
                 cr[i].i = ca[i].i + cc[idx].i;
@@ -3365,15 +3254,13 @@ VALUE ratlas_madd(VALUE self, VALUE transa, VALUE astor, VALUE transc,
         rb_raise(rb_eArgError, "Matrices must have same type.");
 
     /* Check dimentions.  Identify if both or none have been transposed.*/
-    if ( ctransa+ctransc == 2*ctransa)
-    {
+    if ( ctransa+ctransc == 2*ctransa) {
         if ((amat->nrow != cmat->nrow) || (amat->ncol != cmat->ncol))
             rb_raise(rb_eArgError, 
                     "Matrices must have same dimensions.");
 
         retmat = apc(amat, cmat);
-    } else
-    {
+    } else {
         if ((amat->nrow != cmat->ncol) || (amat->ncol != cmat->nrow))
             rb_raise(rb_eArgError, 
                     "Matrices must have same dimensions.");
@@ -3404,8 +3291,7 @@ static void amc_bang(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
         case RATLAS_DCOMPLEX:
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 ca[i].r -= cc[i].r;
                 ca[i].i -= cc[i].i;
             }
@@ -3428,8 +3314,7 @@ static void atmc_bang(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
     
     switch (amat->type) {
         case RATLAS_DFLOAT:
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 ((double *)amat->data)[idx] -= ((double *)cmat->data)[i];
             }
@@ -3437,8 +3322,7 @@ static void atmc_bang(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
         case RATLAS_DCOMPLEX:
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = (i%n * m + i/n);
                 ca[idx].r -= cc[i].r;
                 ca[idx].i -= cc[i].i;
@@ -3462,8 +3346,7 @@ static void amct_bang(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
     
     switch (amat->type) {
         case RATLAS_DFLOAT:
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 ((double *)amat->data)[i] -= ((double *)cmat->data)[idx];
             }
@@ -3471,8 +3354,7 @@ static void amct_bang(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
         case RATLAS_DCOMPLEX:
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = (i%n * m + i/n);
                 ca[i].r -= cc[idx].r;
                 ca[i].i -= cc[idx].i;
@@ -3502,14 +3384,12 @@ VALUE ratlas_msub_bang(VALUE self, VALUE transa, VALUE astor, VALUE transc,
         rb_raise(rb_eArgError, "Matrices must have same type.");
 
     /* Check dimentions.  Identify if both or none have been transposed.*/
-    if ( ctransa+ctransc == 2*ctransa)
-    {
+    if ( ctransa+ctransc == 2*ctransa) {
         if ((amat->nrow != cmat->nrow) || (amat->ncol != cmat->ncol))
             rb_raise(rb_eArgError, 
                     "Matrices must have same dimensions.");
         amc_bang(amat, cmat);
-    } else
-    {
+    } else {
         if ((amat->nrow != cmat->ncol) || (amat->ncol != cmat->nrow))
             rb_raise(rb_eArgError, 
                     "Matrices must have same dimensions.");
@@ -3547,8 +3427,7 @@ static Ratlas_Matrix* amc(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
             cr = (Ratlas_Complex *) retmat->data;
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 cr[i].r = ca[i].r - cc[i].r;
                 cr[i].i = ca[i].i - cc[i].i;
             }
@@ -3581,8 +3460,7 @@ static Ratlas_Matrix* atmc(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
             rr = (double *) retmat->data;
             ra = (double *) amat->data;
             rc = (double *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 rr[i] = ra[idx] - rc[i];
             }
@@ -3591,8 +3469,7 @@ static Ratlas_Matrix* atmc(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
             cr = (Ratlas_Complex *) retmat->data;
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 cr[i].r = ca[idx].r - cc[i].r;
                 cr[i].i = ca[idx].i - cc[i].i;
@@ -3627,8 +3504,7 @@ static Ratlas_Matrix* amct(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
             rr = (double *) retmat->data;
             ra = (double *) amat->data;
             rc = (double *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 rr[i] = ra[i] - rc[idx];
             }
@@ -3637,8 +3513,7 @@ static Ratlas_Matrix* amct(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
             cr = (Ratlas_Complex *) retmat->data;
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 cr[i].r = ca[i].r - cc[idx].r;
                 cr[i].i = ca[i].i - cc[idx].i;
@@ -3669,15 +3544,13 @@ VALUE ratlas_msub(VALUE self, VALUE transa, VALUE astor, VALUE transc,
         rb_raise(rb_eArgError, "Matrices must have same type.");
 
     /* Check dimentions.  Identify if both or none have been transposed.*/
-    if ( ctransa+ctransc == 2*ctransa)
-    {
+    if ( ctransa+ctransc == 2*ctransa) {
         if ((amat->nrow != cmat->nrow) || (amat->ncol != cmat->ncol))
             rb_raise(rb_eArgError, 
                     "Matrices must have same dimensions.");
 
         retmat = amc(amat, cmat);
-    } else
-    {
+    } else {
         if ((amat->nrow != cmat->ncol) || (amat->ncol != cmat->nrow))
             rb_raise(rb_eArgError, 
                     "Matrices must have same dimensions.");
@@ -3706,15 +3579,12 @@ static void mul_ac_bang(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
     switch (amat->type) {
         case RATLAS_DFLOAT:
             for (i = 0; i < nelem; i++)
-            {
                 ((double *)amat->data)[i] *= ((double *)cmat->data)[i];
-            }
             break;
         case RATLAS_DCOMPLEX:
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 a = ca[i].r;
                 b = ca[i].i;
                 c = cc[i].r;
@@ -3743,8 +3613,7 @@ static void mul_atc_bang(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
 
     switch (amat->type) {
         case RATLAS_DFLOAT:
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 ((double *)amat->data)[idx] *= ((double *)cmat->data)[i];
             }
@@ -3752,8 +3621,7 @@ static void mul_atc_bang(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
         case RATLAS_DCOMPLEX:
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = (i%n * m + i/n); 
                 a = ca[idx].r;
                 b = ca[idx].i;
@@ -3784,8 +3652,7 @@ static void mul_act_bang(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
 
     switch (amat->type) {
         case RATLAS_DFLOAT:
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 ((double *)amat->data)[i] *= ((double *)cmat->data)[idx];
             }
@@ -3793,8 +3660,7 @@ static void mul_act_bang(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
         case RATLAS_DCOMPLEX:
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = (i%n * m + i/n); 
                 a = ca[i].r;
                 b = ca[i].i;
@@ -3826,14 +3692,12 @@ VALUE ratlas_mmul_bang(VALUE self, VALUE transa, VALUE astor, VALUE transc,
     if (amat->type != cmat->type)
         rb_raise(rb_eArgError, "Matrices must have same type.");
 
-    if ( ctransa+ctransc == 2*ctransa)
-    {
+    if ( ctransa+ctransc == 2*ctransa) {
         if ((amat->nrow != cmat->nrow) || (amat->ncol != cmat->ncol))
             rb_raise(rb_eArgError, 
                     "Matrices must have same dimensions.");
         mul_ac_bang(amat, cmat);
-    } else
-    {
+    } else {
         if ((amat->nrow != cmat->ncol) || (amat->ncol != cmat->nrow))
             rb_raise(rb_eArgError, 
                     "Matrices must have same dimensions.");
@@ -3870,8 +3734,7 @@ static Ratlas_Matrix* mul_ac(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
             cr = (Ratlas_Complex *) retmat->data;
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 a = ca[i].r;
                 b = ca[i].i;
                 c = cc[i].r;
@@ -3906,8 +3769,7 @@ static Ratlas_Matrix* mul_atc(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
             rr = (double *) retmat->data;
             ra = (double *) amat->data;
             rc = (double *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 rr[i] = ra[idx] * rc[i];
             }
@@ -3916,8 +3778,7 @@ static Ratlas_Matrix* mul_atc(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
             cr = (Ratlas_Complex *) retmat->data;
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n; 
                 a = ca[idx].r;
                 b = ca[idx].i;
@@ -3954,8 +3815,7 @@ static Ratlas_Matrix* mul_act(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
             rr = (double *) retmat->data;
             ra = (double *) amat->data;
             rc = (double *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 rr[i] = ra[i] * rc[idx];
             }
@@ -3964,8 +3824,7 @@ static Ratlas_Matrix* mul_act(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
             cr = (Ratlas_Complex *) retmat->data;
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n; 
                 a = ca[i].r;
                 b = ca[i].i;
@@ -3998,14 +3857,12 @@ VALUE ratlas_mmul(VALUE self, VALUE transa, VALUE astor, VALUE transc,
     if (amat->type != cmat->type)
         rb_raise(rb_eArgError, "Matrices must have same type.");
 
-    if ( ctransa+ctransc == 2*ctransa)
-    {
+    if ( ctransa+ctransc == 2*ctransa) {
         if ((amat->nrow != cmat->nrow) || (amat->ncol != cmat->ncol))
             rb_raise(rb_eArgError, 
                     "Matrices must have same dimensions.");
         retmat = mul_ac(amat, cmat);
-    } else
-    {
+    } else {
         if ((amat->nrow != cmat->ncol) || (amat->ncol != cmat->nrow))
             rb_raise(rb_eArgError, 
                     "Matrices must have same dimensions.");
@@ -4041,8 +3898,7 @@ static void div_ac_bang(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
         case RATLAS_DCOMPLEX:
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 a = ca[i].r;
                 b = ca[i].i;
                 c = cc[i].r;
@@ -4073,8 +3929,7 @@ static void div_atc_bang(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
         case RATLAS_DFLOAT:
             ra = (double *) amat->data;
             rc = (double *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 ra[idx] = ra[idx]/rc[i];
             }
@@ -4082,8 +3937,7 @@ static void div_atc_bang(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
         case RATLAS_DCOMPLEX:
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n; 
                 a = ca[idx].r;
                 b = ca[idx].i;
@@ -4116,8 +3970,7 @@ static void div_act_bang(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
         case RATLAS_DFLOAT:
             ra = (double *) amat->data;
             rc = (double *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 ra[i] = ra[i]/rc[idx];
             }
@@ -4125,8 +3978,7 @@ static void div_act_bang(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
         case RATLAS_DCOMPLEX:
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n; 
                 a = ca[i].r;
                 b = ca[i].i;
@@ -4158,14 +4010,12 @@ VALUE ratlas_mdiv_bang(VALUE self, VALUE transa, VALUE astor, VALUE transc,
     if (amat->type != cmat->type)
         rb_raise(rb_eArgError, "Matrices must have same type.");
 
-    if ( ctransa+ctransc == 2*ctransa)
-    {
+    if ( ctransa+ctransc == 2*ctransa) {
         if ((amat->nrow != cmat->nrow) || (amat->ncol != cmat->ncol))
             rb_raise(rb_eArgError, 
                     "Matrices must have same dimensions.");
         div_ac_bang(amat, cmat);
-    } else
-    {
+    } else {
         if ((amat->nrow != cmat->ncol) || (amat->ncol != cmat->nrow))
             rb_raise(rb_eArgError, 
                     "Matrices must have same dimensions.");
@@ -4203,8 +4053,7 @@ static Ratlas_Matrix* div_ac(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
             cr = (Ratlas_Complex *) retmat->data;
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 a = ca[i].r;
                 b = ca[i].i;
                 c = cc[i].r;
@@ -4238,8 +4087,7 @@ static Ratlas_Matrix* div_atc(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
             rr = (double *) retmat->data;
             ra = (double *) amat->data;
             rc = (double *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 rr[idx] = ra[idx]/rc[i];
             }
@@ -4248,8 +4096,7 @@ static Ratlas_Matrix* div_atc(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
             cr = (Ratlas_Complex *) retmat->data;
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n; 
                 a = ca[idx].r;
                 b = ca[idx].i;
@@ -4285,8 +4132,7 @@ static Ratlas_Matrix* div_act(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
             rr = (double *) retmat->data;
             ra = (double *) amat->data;
             rc = (double *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 rr[i] = ra[i]/rc[idx];
             }
@@ -4295,8 +4141,7 @@ static Ratlas_Matrix* div_act(Ratlas_Matrix *amat, Ratlas_Matrix *cmat)
             cr = (Ratlas_Complex *) retmat->data;
             ca = (Ratlas_Complex *) amat->data;
             cc = (Ratlas_Complex *) cmat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n; 
                 a = ca[i].r;
                 b = ca[i].i;
@@ -4329,14 +4174,12 @@ VALUE ratlas_mdiv(VALUE self, VALUE transa, VALUE astor, VALUE transc,
     if (amat->type != cmat->type)
         rb_raise(rb_eArgError, "Matrices must have same type.");
 
-    if ( ctransa+ctransc == 2*ctransa)
-    {
+    if ( ctransa+ctransc == 2*ctransa) {
         if ((amat->nrow != cmat->nrow) || (amat->ncol != cmat->ncol))
             rb_raise(rb_eArgError, 
                     "Matrices must have same dimensions.");
         retmat = div_ac(amat, cmat);
-    } else
-    {
+    } else {
         if ((amat->nrow != cmat->ncol) || (amat->ncol != cmat->nrow))
             rb_raise(rb_eArgError, 
                     "Matrices must have same dimensions.");
@@ -4394,13 +4237,10 @@ VALUE ratlas_sqrt_bang(VALUE self, VALUE stor)
     switch (mat->type) {
         case RATLAS_DFLOAT:
             for (i = 0; i < nelem; i++)
-            {
                 ((double *)mat->data)[i] = sqrt(((double *)mat->data)[i]); 
-            }
             break;
         case RATLAS_DCOMPLEX:
-            rb_raise(rb_eArgError, 
-                    "sqrt() not implemented for complex.");
+            rb_raise(rb_eArgError, "sqrt() not implemented for complex.");
             break;
     }
     return stor;
@@ -4419,9 +4259,7 @@ VALUE ratlas_log_bang(VALUE self, VALUE stor)
     switch (mat->type) {
         case RATLAS_DFLOAT:
             for (i = 0; i < nelem; i++)
-            {
                 ((double *)mat->data)[i] = log(((double *)mat->data)[i]); 
-            }
             break;
         case RATLAS_DCOMPLEX:
             rb_raise(rb_eArgError, 
@@ -4444,9 +4282,7 @@ VALUE ratlas_exp_bang(VALUE self, VALUE stor)
     switch (mat->type) {
         case RATLAS_DFLOAT:
             for (i = 0; i < nelem; i++)
-            {
                 ((double *)mat->data)[i] = exp(((double *)mat->data)[i]); 
-            }
             break;
         case RATLAS_DCOMPLEX:
             rb_raise(rb_eArgError, 
@@ -4479,8 +4315,7 @@ VALUE ratlas_sum(VALUE self, VALUE stor)
             break;
         case RATLAS_DCOMPLEX:
             c = (Ratlas_Complex *) mat->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 resum += c[i].r;
                 imsum += c[i].i;
             }
@@ -4513,10 +4348,8 @@ VALUE ratlas_rowsum(VALUE self, VALUE stor)
             free(zeros);
             rs = (double *) summat->data;
             rm = (double *) mat->data;
-            for (j = 0; j < mat->ncol; j++)
-            {
-                for (i = 0; i < mat->nrow; i++)
-                {
+            for (j = 0; j < mat->ncol; j++) {
+                for (i = 0; i < mat->nrow; i++) {
                     idx = j*mat->nrow + i;
                     rs[j] += rm[idx];
                 }
@@ -4531,10 +4364,8 @@ VALUE ratlas_rowsum(VALUE self, VALUE stor)
             free(zeros);
             cs = (Ratlas_Complex *) summat->data;
             cm = (Ratlas_Complex *) mat->data;
-            for (j = 0; j < mat->ncol; j++)
-            {
-                for (i = 0; i < mat->nrow; i++)
-                {
+            for (j = 0; j < mat->ncol; j++) {
+                for (i = 0; i < mat->nrow; i++) {
                     idx = j*mat->nrow + i;
                     cs[j].r += cm[idx].r;
                     cs[j].i += cm[idx].i;
@@ -4570,10 +4401,8 @@ VALUE ratlas_colsum(VALUE self, VALUE stor)
             free(zeros);
             rs = (double *) summat->data;
             rm = (double *) mat->data;
-            for (i = 0; i < mat->nrow; i++)
-            {
-                for (j = 0; j < mat->ncol; j++)
-                {
+            for (i = 0; i < mat->nrow; i++) {
+                for (j = 0; j < mat->ncol; j++) {
                     idx = j*mat->nrow + i;
                     rs[i] += rm[idx];
                 }
@@ -4588,10 +4417,8 @@ VALUE ratlas_colsum(VALUE self, VALUE stor)
             free(zeros);
             cs = (Ratlas_Complex *) summat->data;
             cm = (Ratlas_Complex *) mat->data;
-            for (i = 0; i < mat->nrow; i++)
-            {
-                for (j = 0; j < mat->ncol; j++)
-                {
+            for (i = 0; i < mat->nrow; i++) {
+                for (j = 0; j < mat->ncol; j++) {
                     idx = j*mat->nrow + i;
                     cs[i].r += cm[idx].r;
                     cs[i].i += cm[idx].i;
@@ -4622,8 +4449,7 @@ static VALUE colon_AtB(Ratlas_Matrix *mat1, Ratlas_Matrix *mat2)
         case RATLAS_DFLOAT:
             r1 = (double *) mat1->data;
             r2 = (double *) mat2->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx =  i%n * m + i/n;
                 resum += r1[idx] * r2[i];
             }
@@ -4632,8 +4458,7 @@ static VALUE colon_AtB(Ratlas_Matrix *mat1, Ratlas_Matrix *mat2)
         case RATLAS_DCOMPLEX:
             c1 = (Ratlas_Complex *) mat1->data;
             c2 = (Ratlas_Complex *) mat2->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 idx = i%n * m + i/n;
                 a = c1[idx].r;
                 b = c1[idx].i;
@@ -4666,16 +4491,13 @@ static VALUE colon_AB(Ratlas_Matrix *mat1, Ratlas_Matrix *mat2)
             r1 = (double *) mat1->data;
             r2 = (double *) mat2->data;
             for (i = 0; i < nelem; i++)
-            {
                 resum += r1[i] * r2[i];
-            }
             return rb_float_new(resum);
             break;
         case RATLAS_DCOMPLEX:
             c1 = (Ratlas_Complex *) mat1->data;
             c2 = (Ratlas_Complex *) mat2->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 a = c1[i].r;
                 b = c1[i].i;
                 c = c2[i].r;
@@ -4711,14 +4533,12 @@ VALUE ratlas_colon(VALUE self, VALUE trans1, VALUE stor1, VALUE trans2,
         rb_raise(rb_eArgError, "Matrices must be of same type.");
 
     /* Check dimentions.  Identify if both or none have been transposed.*/
-    if ( ctrans1 != ctrans2)
-    {
+    if ( ctrans1 != ctrans2) {
         if ((mat1->nrow != mat2->ncol) || (mat1->ncol != mat2->nrow))
             rb_raise(rb_eArgError, 
                     "Matrices must have same dimensions.");
         return colon_AtB(mat1, mat2);
-    } else
-    {
+    } else {
         if ((mat1->nrow != mat2->nrow) || (mat1->ncol != mat2->ncol))
             rb_raise(rb_eArgError, 
                     "Matrices must have same dimensions.");
@@ -4751,11 +4571,9 @@ VALUE ratlas_damul_bang(VALUE self, VALUE astor, VALUE dstor)
         case RATLAS_DFLOAT:
             rd = (double *) dmat->data;
             ra = (double *) amat->data;
-            for (i = 0; i < dmat->nrow; i++)
-            {
+            for (i = 0; i < dmat->nrow; i++) {
                 d = rd[i];
-                for (j = 0; j < amat->ncol; j++)
-                {
+                for (j = 0; j < amat->ncol; j++) {
                     ra[i+j*amat->nrow] *= d;
                 }
             }
@@ -4763,12 +4581,10 @@ VALUE ratlas_damul_bang(VALUE self, VALUE astor, VALUE dstor)
         case RATLAS_DCOMPLEX:
             cd = (Ratlas_Complex *) dmat->data;
             ca = (Ratlas_Complex *) amat->data;
-            for (i = 0; i < dmat->nrow; i++)
-            {
+            for (i = 0; i < dmat->nrow; i++) {
                 c = cd[i].r;
                 d = cd[i].i;
-                for (j = 0; j < amat->ncol; j++)
-                {
+                for (j = 0; j < amat->ncol; j++) {
                     cursor = i+j*amat->nrow;
                     a = ca[cursor].r;
                     b = ca[cursor].i;
@@ -4812,12 +4628,10 @@ VALUE ratlas_admul_bang(VALUE self, VALUE astor, VALUE dstor)
         case RATLAS_DCOMPLEX:
             ca = (Ratlas_Complex *) amat->data;
             cd = (Ratlas_Complex *) dmat->data;
-            for (j = 0; j < amat->ncol; j++)
-            {
+            for (j = 0; j < amat->ncol; j++) {
                 c = cd[j].r;
                 d = cd[j].i;
-                for (i = 0; i < amat->nrow; i++)
-                {
+                for (i = 0; i < amat->nrow; i++) {
                     pos = j*amat->nrow + i;
                     a = ca[pos].r;
                     b = ca[pos].i;
@@ -4866,8 +4680,7 @@ VALUE ratlas_dadd_bang(VALUE self, VALUE astor, VALUE dstor)
         case RATLAS_DCOMPLEX:
             ca = (Ratlas_Complex *) amat->data;
             cd = (Ratlas_Complex *) dmat->data;
-            for (i = 0; i < nrow; i++)
-            {
+            for (i = 0; i < nrow; i++) {
                 cursor = i*nrow + i; 
                 ca[cursor].r += cd[i].r;
                 ca[cursor].i += cd[i].i;
@@ -4912,8 +4725,7 @@ VALUE ratlas_dsub_bang(VALUE self, VALUE astor, VALUE dstor)
         case RATLAS_DCOMPLEX:
             ca = (Ratlas_Complex *) amat->data;
             cd = (Ratlas_Complex *) dmat->data;
-            for (i = 0; i < nrow; i++)
-            {
+            for (i = 0; i < nrow; i++) {
                 cursor = i*nrow + i; 
                 ca[cursor].r -= cd[i].r;
                 ca[cursor].i -= cd[i].i;
@@ -4934,14 +4746,16 @@ VALUE ratlas_dsub_bang(VALUE self, VALUE astor, VALUE dstor)
 VALUE ratlas_colpiv_bang(VALUE self, VALUE stor, VALUE piv)
 {
     Ratlas_Matrix *mat;
-    struct RArray *pivarr;
+/*     struct RArray *pivarr; */
     double *work, *r;
     Ratlas_Complex *c, *cwork;
-    int i, colstride, colbytes;
+    int i, colstride, colbytes, pivlen;
 
     Data_Get_Struct(stor, Ratlas_Matrix, mat);
-    pivarr = RARRAY(piv);
-    if (pivarr->len != mat->ncol)
+/*     pivarr = RARRAY(piv); */
+    Check_Type(piv, T_ARRAY);
+    pivlen = RARRAY_LEN(piv);
+    if (pivlen != mat->ncol)
         rb_raise(rb_eArgError, "Number of pivots must equal columns.");
     
     colstride = mat->nrow;
@@ -4950,9 +4764,8 @@ VALUE ratlas_colpiv_bang(VALUE self, VALUE stor, VALUE piv)
         case RATLAS_DFLOAT:
             r = (double *) mat->data;
             work = ALLOCA_N(double, colstride);
-            for (i = 0; i < pivarr->len; i++)
-            {
-                if ( i == NUM2INT(pivarr->ptr[i]))
+            for (i = 0; i < pivlen; i++) {
+                if ( i == NUM2INT(RARRAY_PTR(piv)[i]))
                     continue;
                 memcpy(work, r+i*colstride, colbytes);
             }
@@ -4960,9 +4773,8 @@ VALUE ratlas_colpiv_bang(VALUE self, VALUE stor, VALUE piv)
         case RATLAS_DCOMPLEX:
             c = (Ratlas_Complex *) mat->data;
             cwork = ALLOCA_N(Ratlas_Complex, colstride);
-            for (i = 0; i < pivarr->len; i++)
-            {
-                if ( i == NUM2INT(pivarr->ptr[i]))
+            for (i = 0; i < pivlen; i++) {
+                if ( i == NUM2INT(RARRAY_PTR(piv)[i]))
                     continue;
                 memcpy(cwork, c+i*colstride, colbytes);
             }
@@ -4986,21 +4798,17 @@ VALUE ratlas_transpose(VALUE self, VALUE stor)
     m = orig->nrow;
     n = orig->ncol;
 
-    if (m==1 || n==1)
-    {
+    if (m==1 || n==1) {
         trans = ratlas_matrix_alloc(orig->type, orig->matrixtype, n, m, 
                 orig->data);
-
-    } else
-    {
+    } else {
         trans = ratlas_matrix_alloc(orig->type, orig->matrixtype, n, m, NULL);
         nelem = m*n;
         switch (orig->type) {
             case RATLAS_DFLOAT:
                 r = (double *) orig->data;
                 rt = (double *) trans->data;
-                for (i = 0; i < nelem; i++)
-                {
+                for (i = 0; i < nelem; i++) {
                     idx = (i%m)*n + i/m;
                     rt[idx] = r[i];
                 }
@@ -5038,10 +4846,8 @@ void ratlas_matrix_sym2dense(int uplo, Ratlas_Matrix *mat)
             switch (mat->type) {
                 case RATLAS_DFLOAT:
                     rcur = (double *) mat->data;
-                    for (j = 1; j < ncol; j++)
-                    {
-                        for (i = 0; i < ncol; i++)
-                        {
+                    for (j = 1; j < ncol; j++) {
+                        for (i = 0; i < ncol; i++) {
                             if (i == j) break;
                             iup = i+j*ncol;
                             ilo = i*ncol+j;
@@ -5052,10 +4858,8 @@ void ratlas_matrix_sym2dense(int uplo, Ratlas_Matrix *mat)
                 case RATLAS_DCOMPLEX:
                     /* Note: make a Hermitian */
                     ccur = (Ratlas_Complex *) mat->data;
-                    for (j = 1; j < ncol; j++)
-                    {
-                        for (i = 0; i < ncol; i++)
-                        {
+                    for (j = 1; j < ncol; j++) {
+                        for (i = 0; i < ncol; i++) {
                             if (i == j) break;
                             iup = i+j*ncol;
                             ilo = i*ncol+j;
@@ -5070,10 +4874,8 @@ void ratlas_matrix_sym2dense(int uplo, Ratlas_Matrix *mat)
             switch (mat->type) {
                 case RATLAS_DFLOAT:
                     rcur = (double *) mat->data;
-                    for (j = 1; j < ncol; j++)
-                    {
-                        for (i = 0; i < ncol; i++)
-                        {
+                    for (j = 1; j < ncol; j++) {
+                        for (i = 0; i < ncol; i++) {
                             if (i == j) break;
                             iup = i+j*ncol;
                             ilo = i*ncol+j;
@@ -5084,10 +4886,8 @@ void ratlas_matrix_sym2dense(int uplo, Ratlas_Matrix *mat)
                 case RATLAS_DCOMPLEX:
                     /* Note: make a Hermitian */
                     ccur = (Ratlas_Complex *) mat->data;
-                    for (j = 1; j < ncol; j++)
-                    {
-                        for (i = 0; i < ncol; i++)
-                        {
+                    for (j = 1; j < ncol; j++) {
+                        for (i = 0; i < ncol; i++) {
                             if (i == j) break;
                             iup = i+j*ncol;
                             ilo = i*ncol+j;
@@ -5134,10 +4934,8 @@ void ratlas_matrix_uplo_nullify(int unitdiag, int uplo, Ratlas_Matrix *mat)
             switch (mat->type) {
                 case RATLAS_DFLOAT:
                     r = (double *) mat->data;
-                    for (j = 1; j < mat->ncol; j++)
-                    {
-                        for (i = 0; i < mat->nrow; i++)
-                        {
+                    for (j = 1; j < mat->ncol; j++) {
+                        for (i = 0; i < mat->nrow; i++) {
                             if (i == j) break;
                             idx = i+j*mat->nrow;
                             r[idx] = 0;
@@ -5146,10 +4944,8 @@ void ratlas_matrix_uplo_nullify(int unitdiag, int uplo, Ratlas_Matrix *mat)
                     break;
                 case RATLAS_DCOMPLEX:
                     c = (Ratlas_Complex *) mat->data;
-                    for (j = 1; j < mat->ncol; j++)
-                    {
-                        for (i = 0; i < mat->nrow; i++)
-                        {
+                    for (j = 1; j < mat->ncol; j++) {
+                        for (i = 0; i < mat->nrow; i++) {
                             if (i == j) break;
                             idx = i+j*mat->nrow;
                             c[idx].r = 0;
@@ -5163,10 +4959,8 @@ void ratlas_matrix_uplo_nullify(int unitdiag, int uplo, Ratlas_Matrix *mat)
             switch (mat->type) {
                 case RATLAS_DFLOAT:
                     r = (double *) mat->data;
-                    for (i = 1; i < mat->nrow; i++)
-                    {
-                        for (j = 0; j < mat->ncol; j++)
-                        {
+                    for (i = 1; i < mat->nrow; i++) {
+                        for (j = 0; j < mat->ncol; j++) {
                             if (i == j) break;
                             idx = i+j*mat->nrow;
                             r[idx] = 0;
@@ -5175,10 +4969,8 @@ void ratlas_matrix_uplo_nullify(int unitdiag, int uplo, Ratlas_Matrix *mat)
                     break;
                 case RATLAS_DCOMPLEX:
                     c = (Ratlas_Complex *) mat->data;
-                    for (i = 1; i < mat->nrow; i++)
-                    {
-                        for (j = 0; j < mat->ncol; j++)
-                        {
+                    for (i = 1; i < mat->nrow; i++) {
+                        for (j = 0; j < mat->ncol; j++) {
                             if (i == j) break;
                             idx = i+j*mat->nrow;
                             c[idx].r = 0;
@@ -5202,8 +4994,7 @@ void ratlas_matrix_uplo_nullify(int unitdiag, int uplo, Ratlas_Matrix *mat)
                 break;
             case RATLAS_DCOMPLEX:
                 c = (Ratlas_Complex *) mat->data;
-                for (i = 0; i < ndiag; i++)
-                {
+                for (i = 0; i < ndiag; i++) {
                     idx = mat->nrow*i + i;
                     c[idx].r = 1.0;
                     c[idx].i = 0.0;
@@ -5253,8 +5044,7 @@ VALUE ratlas_storage_diag2dense(VALUE self, VALUE dstor)
             free(zeros);
             cm = (Ratlas_Complex *) mat->data;
             cd = (Ratlas_Complex *) diag->data;
-            for (i = 0; i < nelem; i++)
-            {
+            for (i = 0; i < nelem; i++) {
                 cm[i+i*nrow].r = cd[i].r;
                 cm[i+i*nrow].i = cd[i].i;
             }
@@ -5286,8 +5076,7 @@ VALUE ratlas_storage_real2complex(VALUE self, VALUE restor)
     nelem = remat->nrow * remat->ncol;
     r = (double *) remat->data;
     c = (Ratlas_Complex *) cplxmat->data;
-    for (i = 0; i < nelem; i++)
-    {
+    for (i = 0; i < nelem; i++) {
         c[i].r = r[i];
         c[i].i = 0.0;
     }

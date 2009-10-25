@@ -359,7 +359,7 @@ VALUE ratlas_getrs_bang(VALUE self, VALUE trans, VALUE astor, VALUE rowperm,
         VALUE bstor)
 {
     Ratlas_Matrix *amat, *bmat;
-    struct RArray *pivarr;
+/*     struct RArray *pivarr; */
     int i, ctrans;
     LAPACK_INT *ipiv, lda, ldb, nrhs, info, n;
     char transflag;
@@ -374,12 +374,10 @@ VALUE ratlas_getrs_bang(VALUE self, VALUE trans, VALUE astor, VALUE rowperm,
     ctrans = FIX2INT(trans);
     transflag = ratlas_blasflag2lapack(ctrans);
     ipiv = ALLOCA_N(LAPACK_INT, amat->nrow);
-    pivarr = RARRAY(rowperm);
+/*     pivarr = RARRAY(rowperm); */
 
     for (i = 0; i < amat->nrow; i++)
-    {
-        ipiv[i] = (LAPACK_INT) FIX2INT(pivarr->ptr[i]);
-    }
+        ipiv[i] = (LAPACK_INT) FIX2INT(RARRAY_PTR(rowperm)[i]);
     switch (bmat->type) {
         case RATLAS_DFLOAT:
             dgetrs_(&transflag, &n, &nrhs, amat->data,
@@ -438,7 +436,7 @@ VALUE ratlas_sytrs_bang(VALUE self, VALUE uplo, VALUE astor, VALUE rowperm,
         VALUE bstor)
 {
     Ratlas_Matrix *amat, *bmat;
-    struct RArray *pivarr;
+/*     struct RArray *pivarr; */
     int i;
     LAPACK_INT *ipiv, lda, ldb, nrhs, info, n;
     char uploflag;
@@ -452,12 +450,10 @@ VALUE ratlas_sytrs_bang(VALUE self, VALUE uplo, VALUE astor, VALUE rowperm,
     n = (LAPACK_INT) amat->ncol;
     uploflag = ratlas_blasflag2lapack(FIX2INT(uplo));
     ipiv = ALLOCA_N(LAPACK_INT, amat->nrow);
-    pivarr = RARRAY(rowperm);
+/*     pivarr = RARRAY(rowperm); */
 
     for (i = 0; i < amat->nrow; i++)
-    {
-        ipiv[i] = (LAPACK_INT) FIX2INT(pivarr->ptr[i]);
-    }
+        ipiv[i] = (LAPACK_INT) FIX2INT(RARRAY_PTR(rowperm)[i]);
     switch (bmat->type) {
         case RATLAS_DFLOAT:
             dsytrs_(&uploflag, &n, &nrhs, amat->data,
@@ -483,7 +479,7 @@ VALUE ratlas_sytrs_bang(VALUE self, VALUE uplo, VALUE astor, VALUE rowperm,
 VALUE ratlas_getri_bang(VALUE self, VALUE astor, VALUE rowperm)
 {
     Ratlas_Matrix *amat;
-    struct RArray *pivarr;
+/*     struct RArray *pivarr; */
     int i;
     LAPACK_INT *ipiv, lda, info, n, lwork=-1;
     double qwork, *work;
@@ -492,15 +488,13 @@ VALUE ratlas_getri_bang(VALUE self, VALUE astor, VALUE rowperm)
     Data_Get_Struct(astor, Ratlas_Matrix, amat);
     lda = (LAPACK_INT) amat->nrow;
     ipiv = ALLOCA_N(LAPACK_INT, amat->nrow);
-    pivarr = RARRAY(rowperm);
+/*     pivarr = RARRAY(rowperm); */
     n = (LAPACK_INT) amat->ncol;
 
     if (amat->nrow != amat->ncol)
         rb_raise(rb_eArgError, "Can not invert non square matrix.");
     for (i = 0; i < amat->nrow; i++)
-    {
-        ipiv[i] = (LAPACK_INT) FIX2INT(pivarr->ptr[i]);
-    }
+        ipiv[i] = (LAPACK_INT) FIX2INT(RARRAY_PTR(rowperm)[i]);
 
     /* Run a query first to find optimal work array by setting lwork=-1 */
     switch (amat->type) {
@@ -575,7 +569,7 @@ VALUE ratlas_sytri_bang(VALUE self, VALUE uplo, VALUE astor, VALUE rowperm)
     int i, uploint;
     LAPACK_INT *ipiv, lda, info, n;
     char uplochar;
-    struct RArray *pivarr;
+/*     struct RArray *pivarr; */
     double *work;
     LAPACK_DCOMPLEX *cwork;
 
@@ -585,15 +579,13 @@ VALUE ratlas_sytri_bang(VALUE self, VALUE uplo, VALUE astor, VALUE rowperm)
     
     lda = (LAPACK_INT) amat->nrow;
     ipiv = ALLOCA_N(LAPACK_INT, amat->nrow);
-    pivarr = RARRAY(rowperm);
+/*     pivarr = RARRAY(rowperm); */
     n = (LAPACK_INT) amat->ncol;
     uploint = FIX2INT(uplo);
     uplochar = ratlas_blasflag2lapack(uploint);
 
     for (i = 0; i < amat->nrow; i++)
-    {
-        ipiv[i] = (LAPACK_INT) FIX2INT(pivarr->ptr[i]);
-    }
+        ipiv[i] = (LAPACK_INT) FIX2INT(RARRAY_PTR(rowperm)[i]);
 
     switch (amat->type) {
         case RATLAS_DFLOAT:
